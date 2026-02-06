@@ -2076,23 +2076,47 @@ function exportSelectedLayers() {
 
     closeModal('exportPNGModal');
 
+    var canvas = null;
     if (editor.exportLayerPNG) {
-        editor.exportLayerPNG(selectedLayers);
-
-        var layerCount = editor.getLayerCount ? editor.getLayerCount() : 1;
-        if (selectedLayers.length === layerCount) {
-            showToast('Exporting all layers...', 'info');
-        } else if (selectedLayers.length === 1) {
-            showToast('Exporting Layer ' + (selectedLayers[0] + 1) + '...', 'info');
-        } else {
-            showToast('Exporting ' + selectedLayers.length + ' layers...', 'info');
-        }
+        canvas = editor.exportLayerPNG(selectedLayers);
     } else if (editor.exportScreenshot) {
-        // Fallback to old method
-        editor.exportScreenshot();
-        showToast('Exporting PNG...', 'info');
+        canvas = editor.exportScreenshot();
+    }
+
+    if (!canvas) {
+        showToast('Export failed — no image generated.', 'error');
+        return;
+    }
+
+    // Build a descriptive filename
+    var layerCount = editor.getLayerCount ? editor.getLayerCount() : 1;
+    var filename;
+    if (selectedLayers.length === layerCount) {
+        filename = 'tilemap-all-layers.png';
+    } else if (selectedLayers.length === 1) {
+        filename = 'tilemap-layer-' + (selectedLayers[0] + 1) + '.png';
     } else {
-        showToast('Layer export not available. Update required.', 'error');
+        filename = 'tilemap-layers-' + selectedLayers.map(function(i) { return i + 1; }).join('-') + '.png';
+    }
+
+    var dataUrl = canvas.toDataURL('image/png');
+
+    if (window.Platform && Platform.isEmbedded) {
+        showToast('Exporting to your files...', 'info');
+        Platform.uploadAsset(dataUrl, filename, 'image/png').then(function() {
+            showToast('Exported "' + filename + '" to your files!', 'success');
+        }).catch(function() {
+            showToast('Export failed.', 'error');
+        });
+    } else {
+        // Standalone fallback — download
+        var a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('Downloaded "' + filename + '"', 'success');
     }
 }
 
