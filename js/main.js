@@ -1246,7 +1246,7 @@ function Editor(areaW, areaH){
 		}
 	}); 
 	//menu
-	this.sprLogo = rh.LoadImage("https://www.mytekos.com/beta/applications/tilemap_editor/res/logo.png");  
+	this.sprLogo = rh.LoadImage("res/logo.png");  
  
 	 
 	
