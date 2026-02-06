@@ -35,9 +35,9 @@ function ResourcesHandler(callback){
 		};
 		img.onerror = function() {
 			console.error("Failed to load image: " + url);
-			// Try fallback to default tileset URL
-			if (url !== 'https://www.mytekos.com/beta/applications/tilemap_editor/res/tileset.png') {
-				img.src = 'https://www.mytekos.com/beta/applications/tilemap_editor/res/tileset.png';
+			// Try fallback to default tileset
+			if (url !== 'res/tileset.png') {
+				img.src = 'res/tileset.png';
 			} else {
 				// If even fallback fails, still initialize
 				if(funct != undefined){
