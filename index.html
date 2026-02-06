@@ -1,0 +1,2110 @@
+<!doctype html>
+<html>
+<head>
+    <title>Tilemap Editor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="js/main.js"></script>
+    <script src="js/resources.js"></script>
+    <script src="js/utils.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+    /* Loading indicator */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(26, 29, 42, 0.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        transition: opacity 0.3s ease;
+    }
+
+    .loading-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .loading-content {
+        text-align: center;
+        color: #e2e8f0;
+    }
+
+    .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(102, 126, 234, 0.2);
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 10px;
+    }
+
+    .loading-subtext {
+        font-size: 14px;
+        color: #a0aec0;
+    }
+
+    /* Toast Notification Styles */
+    .toast-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        animation: slideIn 0.3s ease-out;
+        max-width: 300px;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    .toast-notification.hiding {
+        animation: slideOut 0.3s ease-in;
+    }
+
+    /* Left Tool Panel Styles */
+    .tool-panel {
+        width: 70px;
+        background: #2a2d3a;
+        border-right: 1px solid #3a3d4a;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+        gap: 15px;
+    }
+
+    /* Layer Indicator */
+    .layer-indicator {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        padding: 8px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .layer-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+    }
+
+    .layer-number {
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        line-height: 1;
+    }
+
+    .tool-selector-vertical {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .tool-option {
+        width: 100%;
+        position: relative;
+    }
+
+    .tool-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .tool-button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 4px;
+        background: #3a3d4a;
+        border: 2px solid #4a4d5a;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        width: 100%;
+        aspect-ratio: 1;
+    }
+
+    .tool-icon {
+        font-size: 22px;
+        margin-bottom: 2px;
+    }
+
+    .tool-name {
+        font-size: 9px;
+        font-weight: 500;
+        color: #a0aec0;
+        text-align: center;
+        line-height: 1.2;
+    }
+
+    .tool-button:hover {
+        background: #4a4d5a;
+        border-color: #5a5d6a;
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .tool-option input[type="radio"]:checked + .tool-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+        box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .tool-option input[type="radio"]:checked + .tool-button .tool-name {
+        color: white;
+    }
+
+    .tool-option input[type="radio"]:checked + .tool-button .tool-icon {
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+    }
+
+    .tool-option input[type="radio"]:checked + .tool-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #2a2d3a;
+        height: 100vh;
+        color: #2d3748;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Menu Bar Styles */
+    .menu-bar {
+        background: #1a1d2a;
+        border-bottom: 1px solid #3a3d4a;
+        display: flex;
+        height: 32px;
+        user-select: none;
+        z-index: 1000;
+        flex-shrink: 0;
+    }
+
+    .menu-item {
+        padding: 6px 16px;
+        color: #e0e0e0;
+        cursor: pointer;
+        position: relative;
+        font-size: 13px;
+        transition: background 0.2s;
+    }
+
+    .menu-item:hover {
+        background: #2a2d3a;
+    }
+
+    .menu-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: #2a2d3a;
+        border: 1px solid #3a3d4a;
+        border-radius: 4px;
+        min-width: 200px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        margin-top: 1px;
+    }
+
+    .menu-dropdown.show {
+        display: block;
+    }
+
+    .menu-option {
+        padding: 8px 12px;
+        color: #e0e0e0;
+        cursor: pointer;
+        font-size: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .menu-option:hover {
+        background: #3a3d4a;
+    }
+
+    .menu-divider {
+        height: 1px;
+        background: #3a3d4a;
+        margin: 4px 0;
+    }
+
+    .shortcut {
+        color: #888;
+        font-size: 11px;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 2000;
+    }
+
+    .modal-overlay.show {
+        display: block;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #2a2d3a;
+        border: 1px solid #3a3d4a;
+        border-radius: 8px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        z-index: 2001;
+        min-width: 400px;
+    }
+
+    .modal.show {
+        display: block;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 16px;
+        font-weight: 600;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .modal-content {
+        padding: 20px;
+    }
+
+    .modal-field {
+        margin-bottom: 16px;
+    }
+
+    .modal-field label {
+        display: block;
+        color: #a0aec0;
+        font-size: 12px;
+        margin-bottom: 6px;
+    }
+
+    .modal-field input {
+        width: 100%;
+        padding: 8px;
+        background: #0a0a0a !important;
+        background-color: #0a0a0a !important;
+        border: 1px solid #3a3d4a;
+        border-radius: 4px;
+        color: #ffffff !important;
+        font-size: 14px;
+    }
+
+    .modal-field input[type="text"],
+    .modal-field input[type="number"] {
+        background: #0a0a0a !important;
+        background-color: #0a0a0a !important;
+        color: #ffffff !important;
+    }
+
+    .modal-field input::placeholder {
+        color: #888888;
+    }
+
+    .modal-field input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: #0a0a0a !important;
+        background-color: #0a0a0a !important;
+        color: #ffffff !important;
+    }
+
+    .modal-note {
+        background: #1a1d2a;
+        border-left: 3px solid #667eea;
+        padding: 8px 12px;
+        font-size: 12px;
+        color: #a0aec0;
+        border-radius: 4px;
+    }
+
+    .modal-buttons {
+        padding: 16px;
+        border-top: 1px solid #3a3d4a;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .modal-btn-cancel, .modal-btn-apply {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .modal-btn-cancel {
+        background: #3a3d4a;
+        color: #e0e0e0;
+    }
+
+    .modal-btn-cancel:hover {
+        background: #4a4d5a;
+    }
+
+    .modal-btn-apply {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .modal-btn-apply:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .paste-btn {
+        padding: 8px 12px;
+        background: #3a3d4a;
+        color: #e0e0e0;
+        border: 1px solid #4a4d5a;
+        border-radius: 4px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .paste-btn:hover {
+        background: #4a4d5a;
+        border-color: #667eea;
+    }
+
+    .paste-btn:active {
+        transform: scale(0.95);
+    }
+
+    .editor-container {
+        display: flex;
+        width: 100vw;
+        height: calc(100vh - 32px);
+        overflow: hidden;
+        flex: 1;
+    }
+
+    #EditorDiv {
+        flex: 1;
+        background: #1a1d2a;
+        overflow: auto;
+        position: relative;
+        margin: 0;
+        padding: 50px;
+        border: none;
+        /* Remove min-width: 0 to allow horizontal scrolling */
+    }
+
+    #EditorCanvas {
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+        background: #f7fafc;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        display: block;
+        margin: 20px;
+        position: relative;
+    }
+
+    .sidebar {
+        width: 320px;
+        min-width: 320px;
+        max-width: 320px;
+        background: #1a1d2a;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        border-left: 1px solid #3a3d4a;
+    }
+
+    #SelectionDiv {
+        background: #2a2d3a;
+        border-radius: 8px;
+        margin: 10px;
+        margin-top: 10px; /* Tight to the top */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        overflow: auto;
+        border: 1px solid #3a3d4a;
+        position: static !important;
+        height: calc(100vh - 30px); /* Full height minus just the margins */
+        flex-shrink: 0;
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    #SelectionCanvas {
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+        cursor: crosshair;
+        display: block;
+        margin: 8px;
+        /* Checkered background for transparency */
+        background-image:
+            linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+            linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+            linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+        background-size: 16px 16px;
+        background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    }
+
+    #Options {
+        background: #2a2d3a;
+        border-radius: 8px;
+        margin: 0 10px 10px 10px;
+        padding: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        position: static !important;
+        border: none !important;
+        overflow-y: auto;
+        overflow-x: hidden;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .control-group {
+        margin: 0;
+        padding: 10px;
+        background: #1a1d2a;
+        border-radius: 6px;
+        border: 1px solid #3a3d4a;
+        flex-shrink: 0;
+    }
+
+    .control-group label {
+        display: block;
+        font-weight: 600;
+        color: #a0aec0;
+        font-size: 11px;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    select, input[type="text"], input[type="number"], textarea {
+        padding: 6px 10px;
+        border: 1px solid #3a3d4a;
+        border-radius: 4px;
+        font-size: 13px;
+        font-family: inherit;
+        transition: all 0.2s;
+        background: #1a1d2a;
+        color: #e2e8f0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    select:focus, input[type="text"]:focus, input[type="number"]:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    }
+
+    input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        margin-right: 6px;
+        cursor: pointer;
+        vertical-align: middle;
+    }
+
+    button, input[type="button"], input[type="submit"] {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: inherit;
+        white-space: nowrap;
+    }
+
+    #export {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    #export:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    #exportScreenshot {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
+        width: 100%;
+    }
+
+    #exportScreenshot:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+    }
+
+    input[type="button"]:not(#export):not(#newLayer):not(#exportScreenshot) {
+        background: white;
+        color: #4a5568;
+        border: 1px solid #cbd5e0;
+    }
+
+    input[type="button"]:not(#export):not(#newLayer):not(#exportScreenshot):hover {
+        background: #f7fafc;
+        border-color: #a0aec0;
+    }
+
+    /* Disabled button styles */
+    input[type="button"]:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #e2e8f0 !important;
+    }
+
+    input[type="button"]:disabled:hover {
+        transform: none;
+        border-color: #cbd5e0;
+    }
+
+    #newLayer:hover {
+        background: #38a169 !important;
+    }
+
+    #updateTileset {
+        padding: 5px 10px;
+        font-size: 11px;
+        flex-shrink: 0;
+    }
+
+    #applyTileSize:hover {
+        background: #3182ce !important;
+    }
+
+    #applyMapSize:hover {
+        background: #805ad5 !important;
+    }
+
+    #zoomIn:hover, #zoomOut:hover, #zoomReset:hover {
+        background: #cbd5e0 !important;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+    }
+
+    .button-group input[type="button"] {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .button-group a {
+        flex: 1;
+        text-decoration: none;
+        min-width: 0;
+    }
+
+    .info-text {
+        font-size: 10px;
+        color: #a0aec0;
+        margin-top: auto;
+        padding: 8px;
+        background: linear-gradient(135deg, #667eea25 0%, #764ba225 100%);
+        border-radius: 4px;
+        border-left: 2px solid #667eea;
+        line-height: 1.4;
+        flex-shrink: 0;
+    }
+
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #2a2d3a;
+        border-radius: 0;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #718096;
+    }
+
+    /* Scrollbar for sidebar elements */
+    .sidebar ::-webkit-scrollbar-track {
+        background: #1a1d2a;
+        border-radius: 4px;
+    }
+
+    .sidebar ::-webkit-scrollbar-thumb {
+        background: #4a5568;
+    }
+
+    .sidebar ::-webkit-scrollbar-thumb:hover {
+        background: #718096;
+    }
+
+    p {
+        border: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    #output, #loadMap {
+        display: none;
+    }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading Tilemap Editor</div>
+            <div class="loading-subtext">Please wait while we load your project...</div>
+        </div>
+    </div>
+
+    <!-- Menu Bar -->
+    <div class="menu-bar">
+        <div class="menu-item" onclick="toggleMenu('fileMenu')">
+            File
+            <div class="menu-dropdown" id="fileMenu">
+                <div class="menu-option" onclick="if(window.editor) editor.Export()">&#x1F4BE; Save <span class="shortcut">Ctrl+S</span></div>
+                <div class="menu-option" onclick="openExportPNGModal()">&#x1F4F7; Export PNG...</div>
+                <div class="menu-divider"></div>
+                <div class="menu-option" onclick="openModal('tilesetModal')">&#x1F3A8; Change Tileset...</div>
+            </div>
+        </div>
+        <div class="menu-item" onclick="toggleMenu('editMenu')">
+            Edit
+            <div class="menu-dropdown" id="editMenu">
+                <div class="menu-option" onclick="editor.undo()">&#x21B6; Undo <span class="shortcut">Ctrl+Z</span></div>
+                <div class="menu-option" onclick="editor.redo()">&#x21B7; Redo <span class="shortcut">Ctrl+Y</span></div>
+                <div class="menu-divider"></div>
+                <div class="menu-option" onclick="openModal('mapSizeModal')">&#x1F4D0; Map Size...</div>
+                <div class="menu-option" onclick="openModal('tileSizeModal')">&#x2B1C; Tile Size...</div>
+            </div>
+        </div>
+        <div class="menu-item" onclick="toggleMenu('viewMenu')">
+            View
+            <div class="menu-dropdown" id="viewMenu">
+                <div class="menu-option" onclick="toggleViewOption('grid')">
+                    <span id="gridCheck">&#x2713;</span> Grid
+                </div>
+                <div class="menu-option" onclick="toggleViewOption('tiles')">
+                    <span id="tilesCheck">&#x2713;</span> Tiles
+                </div>
+                <div class="menu-option" onclick="toggleViewOption('layerOnly')">
+                    <span id="layerOnlyCheck">&nbsp;</span> Current Layer Only
+                </div>
+                <div class="menu-option" onclick="toggleViewOption('transparency')">
+                    <span id="transparencyCheck">&#x2713;</span> Layer Transparency
+                </div>
+                <div class="menu-divider"></div>
+                <div class="menu-option" onclick="if(window.editor && editor.zoomIn) editor.zoomIn()">&#x1F50D; Zoom In</div>
+                <div class="menu-option" onclick="if(window.editor && editor.zoomOut) editor.zoomOut()">&#x1F50D; Zoom Out</div>
+                <div class="menu-option" onclick="if(window.editor && editor.resetZoom) editor.resetZoom()">&#x1F504; Reset Zoom</div>
+            </div>
+        </div>
+        <div class="menu-item" onclick="toggleMenu('layerMenu')">
+            Layer
+            <div class="menu-dropdown" id="layerMenu">
+                <div class="menu-option" onclick="addNewLayer()">&#x2795; Add Layer</div>
+                <div class="menu-divider"></div>
+                <div id="layerList"></div>
+            </div>
+        </div>
+        <div class="menu-item" onclick="toggleMenu('helpMenu')">
+            Help
+            <div class="menu-dropdown" id="helpMenu">
+                <div class="menu-option" onclick="openModal('helpModal')">&#x1F4DA; Quick Tips</div>
+                <div class="menu-option" onclick="openModal('shortcutsModal')">&#x2328;&#xFE0F; Keyboard Shortcuts</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+
+    <!-- Map Size Modal -->
+    <div class="modal" id="mapSizeModal">
+        <div class="modal-header">Map Size</div>
+        <div class="modal-content">
+            <div class="modal-field">
+                <label>Width (tiles):</label>
+                <input type="number" id="modalMapWidth" min="5" max="200" value="50">
+                <small style="color: #a0aec0; display: block; margin-top: 4px;">Min: 5, Max: 200</small>
+            </div>
+            <div class="modal-field">
+                <label>Height (tiles):</label>
+                <input type="number" id="modalMapHeight" min="5" max="200" value="30">
+                <small style="color: #a0aec0; display: block; margin-top: 4px;">Min: 5, Max: 200</small>
+            </div>
+            <div class="modal-note">&#x26A0;&#xFE0F; Existing tiles will be preserved</div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn-apply" onclick="applyMapSize()">Apply</button>
+        </div>
+    </div>
+
+    <!-- Tile Size Modal -->
+    <div class="modal" id="tileSizeModal">
+        <div class="modal-header">Tile Size</div>
+        <div class="modal-content">
+            <div class="modal-field">
+                <label>Size (pixels):</label>
+                <input type="number" id="modalTileSize" min="8" max="128" value="16">
+            </div>
+            <div class="modal-note">&#x1F4A1; Common sizes: 16, 32, 48, 64</div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn-apply" onclick="applyTileSize()">Apply</button>
+        </div>
+    </div>
+
+    <!-- Tileset Modal -->
+    <div class="modal" id="tilesetModal">
+        <div class="modal-header">Change Tileset</div>
+        <div class="modal-content">
+            <div class="modal-field">
+                <label>Tileset URL:</label>
+                <div style="display: flex; gap: 8px; align-items: stretch;">
+                    <input type="text" id="modalTilesetUrl" placeholder="https://example.com/tileset.png" style="flex: 1;">
+                    <button class="paste-btn" onclick="pasteFromClipboard()" title="Paste from clipboard">
+                        &#x1F4CB; Paste
+                    </button>
+                </div>
+            </div>
+            <div class="modal-note">&#x1F4A1; Enter the URL of your tileset image or click Paste to insert from clipboard</div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn-apply" onclick="applyTilesetUrl()">Apply</button>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-header">Quick Tips</div>
+        <div class="modal-content" style="max-height: 400px; overflow-y: auto;">
+            <div style="font-size: 13px; line-height: 1.8; color: #e2e8f0;">
+                <h3 style="color: #667eea; margin-bottom: 10px;">&#x1F3A8; Drawing</h3>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Left-click to place tiles</li>
+                    <li>Right-click to erase tiles</li>
+                    <li>Select tools from the left panel</li>
+                    <li>Use fill tool to fill empty areas</li>
+                    <li>Use fill erase to remove connected tiles</li>
+                    <li>Use row fill to place tiles across entire row</li>
+                    <li>Use column fill to place tiles down entire column</li>
+                </ul>
+
+                <h3 style="color: #667eea; margin-bottom: 10px;">&#x1F4D0; Map Settings</h3>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Use <strong>File &rarr; Map Settings</strong> to change map size</li>
+                    <li>Use <strong>Edit &rarr; Tile Size</strong> to adjust tile dimensions</li>
+                    <li>Use <strong>Edit &rarr; Tileset Settings</strong> to change tileset</li>
+                </ul>
+
+                <h3 style="color: #667eea; margin-bottom: 10px;">&#x1F4D1; Layers</h3>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Use the Layer menu to manage layers</li>
+                    <li>Layer 1 is the background layer</li>
+                    <li>Higher layers appear on top</li>
+                    <li>Current layer shown on left panel indicator</li>
+                    <li>Press 1-9 to quickly switch layers</li>
+                </ul>
+
+                <h3 style="color: #667eea; margin-bottom: 10px;">&#x1F3A8; Tileset</h3>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Change tileset from File &rarr; Change Tileset</li>
+                    <li>Enter a URL to your tileset image</li>
+                    <li>Tileset appears in right sidebar</li>
+                    <li>Click tiles to select them for drawing</li>
+                    <li style="color: #f6ad55;"><strong>&#x26A0;&#xFE0F; Caution:</strong> Changing tilesets with different tile arrangements will mess up your existing tilemap!</li>
+                </ul>
+
+                <h3 style="color: #667eea; margin-bottom: 10px;">&#x1F5B1;&#xFE0F; Navigation</h3>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li><strong>Middle Mouse Button:</strong> Click and drag to pan around the canvas</li>
+                    <li><strong>Mouse Wheel:</strong> Scroll to zoom in/out (25%-400%)</li>
+                    <li><strong>Zoom Controls:</strong> Use +/- buttons in sidebar or reset to 100%</li>
+                </ul>
+
+                <h3 style="color: #667eea; margin-bottom: 10px;">&#x1F441; View Options</h3>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li>Toggle grid visibility in View menu</li>
+                    <li>Enable layer transparency to see other layers</li>
+                    <li>Use zoom controls to navigate large maps</li>
+                    <li>Mouse wheel to zoom in/out</li>
+                </ul>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn-apply" onclick="closeModal('helpModal')">Got it!</button>
+        </div>
+    </div>
+
+    <!-- Shortcuts Modal -->
+    <div class="modal" id="shortcutsModal">
+        <div class="modal-header">Keyboard Shortcuts</div>
+        <div class="modal-content" style="max-height: 400px; overflow-y: auto;">
+            <div style="font-size: 13px; line-height: 1.8; color: #e2e8f0;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #3a3d4a;">
+                        <td style="padding: 8px; color: #667eea;"><strong>Ctrl+S</strong></td>
+                        <td style="padding: 8px;">Save project</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #3a3d4a;">
+                        <td style="padding: 8px; color: #667eea;"><strong>Ctrl+Z</strong></td>
+                        <td style="padding: 8px;">Undo last action</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #3a3d4a;">
+                        <td style="padding: 8px; color: #667eea;"><strong>Ctrl+Y</strong></td>
+                        <td style="padding: 8px;">Redo last action</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #3a3d4a;">
+                        <td style="padding: 8px; color: #667eea;"><strong>P</strong></td>
+                        <td style="padding: 8px;">Select pencil tool</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #3a3d4a;">
+                        <td style="padding: 8px; color: #667eea;"><strong>E</strong></td>
+                        <td style="padding: 8px;">Select eraser tool</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #3a3d4a;">
+                        <td style="padding: 8px; color: #667eea;"><strong>F</strong></td>
+                        <td style="padding: 8px;">Select fill tool</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #3a3d4a;">
+                        <td style="padding: 8px; color: #667eea;"><strong>X</strong></td>
+                        <td style="padding: 8px;">Select fill erase tool</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #3a3d4a;">
+                        <td style="padding: 8px; color: #667eea;"><strong>R</strong></td>
+                        <td style="padding: 8px;">Select row fill tool</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #3a3d4a;">
+                        <td style="padding: 8px; color: #667eea;"><strong>C</strong></td>
+                        <td style="padding: 8px;">Select column fill tool</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #3a3d4a;">
+                        <td style="padding: 8px; color: #667eea;"><strong>1-9</strong></td>
+                        <td style="padding: 8px;">Switch to layer (1-9)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #3a3d4a;">
+                        <td style="padding: 8px; color: #667eea;"><strong>Mouse Wheel</strong></td>
+                        <td style="padding: 8px;">Zoom in/out</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; color: #667eea;"><strong>Right Click</strong></td>
+                        <td style="padding: 8px;">Quick erase</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn-apply" onclick="closeModal('shortcutsModal')">Got it!</button>
+        </div>
+    </div>
+
+    <!-- Export PNG Modal -->
+    <div class="modal" id="exportPNGModal">
+        <div class="modal-header">Export PNG</div>
+        <div class="modal-content">
+            <div class="modal-field">
+                <label>Select Layers to Export:</label>
+                <div id="exportLayerCheckboxes" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; max-height: 200px; overflow-y: auto; padding: 8px; background: #2d2d3d; border-radius: 6px;">
+                    <!-- Checkboxes populated dynamically -->
+                </div>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button type="button" onclick="selectAllExportLayers(true)" style="flex: 1; padding: 6px 12px; background: #3a3d4a; border: none; border-radius: 4px; color: #e2e8f0; cursor: pointer; font-size: 12px;">Select All</button>
+                <button type="button" onclick="selectAllExportLayers(false)" style="flex: 1; padding: 6px 12px; background: #3a3d4a; border: none; border-radius: 4px; color: #e2e8f0; cursor: pointer; font-size: 12px;">Deselect All</button>
+            </div>
+            <div class="modal-note">&#x1F4A1; Export will save the PNG to your project's file manager</div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn-cancel" onclick="closeModal('exportPNGModal')">Cancel</button>
+            <button class="modal-btn-apply" onclick="exportSelectedLayers()">Export</button>
+        </div>
+    </div>
+
+    <div class="editor-container">
+        <!-- Left Tool Panel -->
+        <div class="tool-panel">
+            <!-- Layer Indicator -->
+            <div class="layer-indicator">
+                <div class="layer-label">LAYER</div>
+                <div class="layer-number" id="currentLayerIndicator">1</div>
+            </div>
+
+            <div class="tool-selector-vertical">
+                <label class="tool-option" data-tool="pencil" title="Draw tiles one by one">
+                    <input type="radio" name="toolType" value="pencil" checked>
+                    <div class="tool-button">
+                        <span class="tool-icon">&#x270F;&#xFE0F;</span>
+                        <span class="tool-name">Pencil</span>
+                    </div>
+                </label>
+                <label class="tool-option" data-tool="eraser" title="Erase single tiles">
+                    <input type="radio" name="toolType" value="eraser">
+                    <div class="tool-button">
+                        <span class="tool-icon">&#x1F9FD;</span>
+                        <span class="tool-name">Eraser</span>
+                    </div>
+                </label>
+                <label class="tool-option" data-tool="fill" title="Fill empty connected areas">
+                    <input type="radio" name="toolType" value="fill">
+                    <div class="tool-button">
+                        <span class="tool-icon">&#x1FAA3;</span>
+                        <span class="tool-name">Fill</span>
+                    </div>
+                </label>
+                <label class="tool-option" data-tool="fillErase" title="Erase connected tiles of same type">
+                    <input type="radio" name="toolType" value="fillErase">
+                    <div class="tool-button">
+                        <span class="tool-icon">&#x1F9F9;</span>
+                        <span class="tool-name">Fill Erase</span>
+                    </div>
+                </label>
+                <label class="tool-option" data-tool="rowFill" title="Fill entire horizontal row with selected tile">
+                    <input type="radio" name="toolType" value="rowFill">
+                    <div class="tool-button">
+                        <span class="tool-icon">&#x2194;&#xFE0F;</span>
+                        <span class="tool-name">Row Fill</span>
+                    </div>
+                </label>
+                <label class="tool-option" data-tool="columnFill" title="Fill entire vertical column with selected tile">
+                    <input type="radio" name="toolType" value="columnFill">
+                    <div class="tool-button">
+                        <span class="tool-icon">&#x2195;&#xFE0F;</span>
+                        <span class="tool-name">Column Fill</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Main Canvas Area -->
+        <div id="EditorDiv">
+            <canvas id="EditorCanvas">
+                Your browser does not support the HTML5 canvas element.
+            </canvas>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="sidebar">
+            <!-- Tileset Selection Area -->
+            <div id="SelectionDiv">
+                <canvas id="SelectionCanvas">
+                    Your browser does not support the HTML5 canvas element.
+                </canvas>
+            </div>
+
+            <!-- Options Panel (Hidden - no longer needed) -->
+            <div id="Options" style="display: none;">
+                <!-- Hidden tools -->
+                <div style="display: none;">
+                    <select id="mode">
+                        <option selected="selected">Tile</option>
+                        <option>Collision</option>
+                        <option>Object</option>
+                    </select>
+                    <input id="newObject" type="button" value="New" style="display:none;" />
+                    <input id="loadFile" type="file" />
+                    <input id="newMap" type="button" value="New" />
+                    <input id="loadMap" type="button" value="Load" />
+                </div>
+
+                <!-- Layer Controls removed - use Layer menu instead -->
+
+                <!-- Hidden elements (spacing and cellSize for compatibility) -->
+                <input id="spacing" type="hidden" value="0" />
+                <input id="cellSize" type="hidden" value="16" />
+
+                <!-- Hidden elements needed by the application -->
+                <div style="display: none;">
+                    <!-- Layer selector (hidden but still functional) -->
+                    <select id="layersel" onchange="if(window.editor) selectLayer(parseInt(this.value))">
+                        <option value="0" selected>Layer 1</option>
+                        <option value="1">Layer 2</option>
+                        <option value="2">Layer 3</option>
+                    </select>
+
+                    <!-- View option checkboxes -->
+                    <input id="grid_t" type="checkbox" checked />
+                    <input id="tiles_t" type="checkbox" checked />
+                    <input id="layer_t" type="checkbox" />
+                    <input id="layerTransparency_t" type="checkbox" checked />
+                    <input id="blocks_t" type="checkbox" checked />
+                    <input id="objects_t" type="checkbox" checked />
+
+                    <!-- Hidden tileset input -->
+                    <input type="hidden" id="tilemap" name="tilemap" value="res/tileset.png" />
+
+                    <!-- Hidden buttons for compatibility -->
+                    <input id="export" type="button" value="Save" style="display: none;" />
+                    <input id="exportScreenshot" type="button" value="Export PNG" style="display: none;" />
+                    <input id="undoBtn" type="button" value="Undo" style="display: none;" />
+                    <input id="redoBtn" type="button" value="Redo" style="display: none;" />
+                </div>
+
+                <!-- Hidden textarea for data -->
+                <textarea id="output" style="display: none;">var levels = [[[16,0,50,30],[],[],[]]]; </textarea>
+            </div>
+        </div>
+    </div>
+<script>
+// Function to hide loading overlay
+function hideLoadingOverlay() {
+    var overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        // Remove from DOM after animation
+        setTimeout(function() {
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        }, 300);
+    }
+}
+
+// Function to update loading text
+function updateLoadingText(text, subtext) {
+    var loadingText = document.querySelector('.loading-text');
+    var loadingSubtext = document.querySelector('.loading-subtext');
+    if (loadingText) loadingText.textContent = text;
+    if (loadingSubtext) loadingSubtext.textContent = subtext || 'Please wait...';
+}
+
+window.onload = function(){
+// Update loading status
+updateLoadingText('Initializing Editor', 'Setting up the tilemap editor...');
+
+// Wait for editor to be fully initialized and load the map
+setTimeout(function(){
+  // Check if we have existing project data to load
+  var outputTextarea = document.getElementById('output');
+  var hasExistingData = outputTextarea && outputTextarea.value && outputTextarea.value.trim() !== '';
+
+  if (hasExistingData) {
+    updateLoadingText('Loading Project', 'Loading your tilemap data...');
+  }
+
+  if (window.editor) {
+    if (hasExistingData) {
+      // Load existing project data
+      console.log('Loading existing project data...');
+      if (document.getElementById('loadMap')) {
+        document.getElementById('loadMap').click();
+      } else {
+        // Fallback: call LoadMap directly
+        editor.LoadMap();
+      }
+      // Hide loading overlay after a short delay to ensure everything is rendered
+      setTimeout(hideLoadingOverlay, 500);
+    } else {
+      // No existing data, just initialize empty map
+      console.log('No existing data, initializing empty map...');
+      editor.LoadMap();
+      // Hide loading overlay after a short delay
+      setTimeout(hideLoadingOverlay, 500);
+    }
+  } else {
+    // If editor not ready, wait a bit more
+    console.log('Editor not ready, waiting...');
+    setTimeout(function(){
+      if (window.editor) {
+        if (hasExistingData && document.getElementById('loadMap')) {
+          document.getElementById('loadMap').click();
+        } else if (window.editor) {
+          editor.LoadMap();
+        }
+        // Hide loading overlay after editor is ready
+        setTimeout(hideLoadingOverlay, 500);
+      } else {
+        // If still not ready, hide overlay anyway to prevent infinite loading
+        hideLoadingOverlay();
+      }
+    }, 1000);
+  }
+}, 2000); // Wait a bit longer for editor to be fully initialized
+}
+
+var saved = 1;
+
+window.addEventListener('click', function(e){
+  var canvas = document.getElementById('EditorCanvas');
+  if (canvas && canvas.contains(e.target)){
+    saved = 0;
+  } else{
+    // Clicked outside the box
+    //saved = 1;
+  }
+});
+
+window.onbeforeunload = function() {
+    if (saved == 0) {
+        return "Are you sure you want to leave this page?";
+    }
+}
+
+// Add keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl+S for saving
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault(); // Prevent browser's default save dialog
+
+        // Trigger the save button click
+        var saveButton = document.getElementById('export');
+        if (saveButton && editor) {
+            saveButton.click();
+        }
+        return;
+    }
+
+    // Don't process tool shortcuts if user is typing in an input field
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+    }
+
+    // Tool selection shortcuts and layer shortcuts
+    if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+        switch(e.key.toLowerCase()) {
+            case 'p': // Pencil tool
+                selectTool('pencil');
+                break;
+            case 'e': // Eraser tool
+                selectTool('eraser');
+                break;
+            case 'f': // Fill tool
+                selectTool('fill');
+                break;
+            case 'x': // Fill erase tool
+                selectTool('fillErase');
+                break;
+            case 'r': // Row fill tool
+                selectTool('rowFill');
+                break;
+            case 'c': // Column fill tool
+                selectTool('columnFill');
+                break;
+        }
+
+        // Number keys for layer selection (1-9 maps to layer index 0-8)
+        if (e.key >= '1' && e.key <= '9') {
+            const layerIndex = parseInt(e.key) - 1; // Convert to 0-indexed
+            if (window.editor && editor.tiles && layerIndex < editor.tiles.length) {
+                selectLayer(layerIndex);
+            }
+        }
+    }
+});
+
+// Toast notification function
+function showToast(message, duration = 3000) {
+    // Remove any existing toast
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    // Create new toast
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.innerHTML = '&#x2705; ' + message;
+    document.body.appendChild(toast);
+
+    // Auto-hide after duration
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, duration);
+}
+
+var currentProjectId = null;
+
+// View option toggle function
+function toggleViewOption(option) {
+    if (!window.editor) {
+        showToast('Editor not ready yet. Please try again.', 'error');
+        return;
+    }
+
+    switch(option) {
+        case 'grid':
+            editor.drawGrid = !editor.drawGrid;
+            document.getElementById('gridCheck').textContent = editor.drawGrid ? '\u2713' : ' ';
+            showToast(editor.drawGrid ? 'Grid enabled' : 'Grid disabled');
+            break;
+        case 'tiles':
+            editor.drawTiles = !editor.drawTiles;
+            document.getElementById('tilesCheck').textContent = editor.drawTiles ? '\u2713' : ' ';
+            showToast(editor.drawTiles ? 'Tiles visible' : 'Tiles hidden');
+            break;
+        case 'layerOnly':
+            editor.drawLayer = !editor.drawLayer;
+            document.getElementById('layerOnlyCheck').textContent = editor.drawLayer ? '\u2713' : ' ';
+            showToast(editor.drawLayer ? 'Showing current layer only' : 'Showing all layers');
+            break;
+        case 'transparency':
+            editor.showLayerTransparency = !editor.showLayerTransparency;
+            document.getElementById('transparencyCheck').textContent = editor.showLayerTransparency ? '\u2713' : ' ';
+            showToast(editor.showLayerTransparency ? 'Layer transparency enabled' : 'Layer transparency disabled');
+            break;
+    }
+
+    // Redraw the editor with new settings
+    editor.Draw();
+}
+
+// Zoom functions for the editor
+function addZoomFunctions() {
+    if (!window.editor) return;
+
+    // Add zoom functions to the editor if they don't exist
+    if (!editor.zoomIn) {
+        editor.minZoom = 0.25;
+        editor.maxZoom = 4;
+        editor.zoomStep = 0.25;
+        editor.zoom = editor.zoom || 1;
+
+        editor.zoomIn = function() {
+            this.zoom = Math.min(this.maxZoom, this.zoom + this.zoomStep);
+            this.applyZoom();
+            this.Draw();
+            updateZoomIndicator();
+        };
+
+        editor.zoomOut = function() {
+            this.zoom = Math.max(this.minZoom, this.zoom - this.zoomStep);
+            this.applyZoom();
+            this.Draw();
+            updateZoomIndicator();
+        };
+
+        editor.resetZoom = function() {
+            this.zoom = 1;
+            this.applyZoom();
+            this.Draw();
+            updateZoomIndicator();
+            // Center the canvas
+            this.div.scrollLeft = (this.canvas.offsetWidth - this.div.offsetWidth) / 2;
+            this.div.scrollTop = (this.canvas.offsetHeight - this.div.offsetHeight) / 2;
+        };
+
+        editor.applyZoom = function() {
+            if (this.canvas) {
+                this.canvas.style.transform = 'scale(' + this.zoom + ')';
+                this.canvas.style.transformOrigin = 'top left';
+            }
+        };
+    }
+}
+
+function updateZoomIndicator() {
+    const indicator = document.getElementById('zoomIndicator');
+    if (indicator && window.editor) {
+        indicator.textContent = Math.round(editor.zoom * 100) + '%';
+    }
+}
+
+// Function to select a tool programmatically
+function selectTool(toolName) {
+    // Find the radio button for this tool
+    const toolRadio = document.querySelector(`input[name="toolType"][value="${toolName}"]`);
+    if (toolRadio) {
+        toolRadio.checked = true;
+
+        // Update visual state of tool options
+        document.querySelectorAll('.tool-option').forEach(option => {
+            option.classList.remove('active');
+        });
+
+        const toolOption = document.querySelector(`.tool-option[data-tool="${toolName}"]`);
+        if (toolOption) {
+            toolOption.classList.add('active');
+        }
+
+        // Update the editor's toolType - THIS IS THE KEY!
+        if (window.editor) {
+            editor.toolType = toolName;
+        }
+
+        // Show toast notification
+        const toolNames = {
+            'pencil': 'Pencil',
+            'eraser': 'Eraser',
+            'fill': 'Fill',
+            'fillErase': 'Fill Erase',
+            'rowFill': 'Row Fill',
+            'columnFill': 'Column Fill'
+        };
+        showToast(`${toolNames[toolName]} tool selected`);
+    }
+}
+
+// Initialize view options and zoom after editor is ready
+function initializeViewOptions() {
+    if (!window.editor) return;
+
+    // Initialize checkboxes based on editor state
+    document.getElementById('gridCheck').textContent = editor.drawGrid ? '\u2713' : ' ';
+    document.getElementById('tilesCheck').textContent = editor.drawTiles ? '\u2713' : ' ';
+    document.getElementById('layerOnlyCheck').textContent = editor.drawLayer ? '\u2713' : ' ';
+    document.getElementById('transparencyCheck').textContent = (editor.showOtherLayers !== false) ? '\u2713' : ' ';
+
+    // Set default values if not set
+    if (editor.drawGrid === undefined) editor.drawGrid = true;
+    if (editor.drawTiles === undefined) editor.drawTiles = true;
+    if (editor.drawLayer === undefined) editor.drawLayer = false;
+    if (editor.showOtherLayers === undefined) editor.showOtherLayers = true;
+
+    // Initialize layer list
+    updateLayerList();
+
+    // Set up tool radio button change handlers
+    document.querySelectorAll('input[name="toolType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked && window.editor) {
+                editor.toolType = this.value;
+
+                // Update visual state
+                document.querySelectorAll('.tool-option').forEach(option => {
+                    option.classList.remove('active');
+                });
+                const toolOption = document.querySelector(`.tool-option[data-tool="${this.value}"]`);
+                if (toolOption) {
+                    toolOption.classList.add('active');
+                }
+            }
+        });
+    });
+
+    // Set initial tool
+    if (editor.toolType === undefined) {
+        editor.toolType = 'pencil';
+    }
+
+    // Removed layer_s since we're only using the Layer menu now
+}
+
+// Layer management functions
+function updateLayerList() {
+    if (!window.editor) return;
+
+    const layerList = document.getElementById('layerList');
+    if (!layerList) return;
+
+    layerList.innerHTML = '';
+
+    // Add current layers to the menu (display as Layer 1, 2, 3... but index is still 0, 1, 2...)
+    for (let i = 0; i < editor.tiles.length; i++) {
+        const layerItem = document.createElement('div');
+        layerItem.className = 'menu-option';
+        const displayNumber = i + 1; // Display as 1-indexed
+        layerItem.innerHTML = `
+            ${i === editor.currentLayer ? '\u25B6' : '&nbsp;&nbsp;'} Layer ${displayNumber}
+            ${i === 0 ? ' (Background)' : i === 1 ? ' (Middle)' : i === 2 ? ' (Foreground)' : ''}
+        `;
+        layerItem.onclick = function() {
+            selectLayer(i);
+        };
+        layerList.appendChild(layerItem);
+    }
+}
+
+function selectLayer(layerIndex) {
+    if (!window.editor) {
+        showToast('Editor not ready yet. Please try again.', 'error');
+        return;
+    }
+
+    editor.currentLayer = layerIndex;
+    editor.layer = layerIndex;
+
+    // Update the hidden layer selector
+    const layerSel = document.getElementById('layersel');
+    if (layerSel) {
+        layerSel.value = layerIndex;
+    }
+
+    // Layer_s selector removed - using Layer menu only
+
+    // Update the layer indicator (show as 1-indexed)
+    const indicator = document.getElementById('currentLayerIndicator');
+    if (indicator) {
+        indicator.textContent = layerIndex + 1;
+    }
+
+    updateLayerList();
+    showToast(`Switched to Layer ${layerIndex + 1}`);
+    editor.Draw();
+}
+
+function addNewLayer() {
+    if (!window.editor) {
+        showToast('Editor not ready yet. Please try again.', 'error');
+        return;
+    }
+
+    if (editor.tiles.length >= 10) {
+        showToast('Maximum 10 layers allowed', 'error');
+        return;
+    }
+
+    // Add new empty layer
+    editor.tiles.push([]);
+    const newLayerIndex = editor.tiles.length - 1;
+
+    // Update the hidden layer selector dropdown
+    const layerSel = document.getElementById('layersel');
+    if (layerSel) {
+        const option = document.createElement('option');
+        option.value = newLayerIndex;
+        option.textContent = `Layer ${newLayerIndex}`;
+        layerSel.appendChild(option);
+    }
+
+    // Layer_s selector removed - using Layer menu only
+
+    // Switch to the new layer
+    selectLayer(newLayerIndex);
+
+    updateLayerList();
+    showToast(`Added Layer ${newLayerIndex + 1}`);
+}
+
+// Call this after editor is initialized
+setTimeout(function() {
+    addZoomFunctions();
+    initializeViewOptions();
+    setupMiddleMousePanning();
+}, 3000);
+
+// Setup middle mouse button panning
+function setupMiddleMousePanning() {
+    if (!window.editor || !editor.div) return;
+
+    let isPanning = false;
+    let startX, startY;
+    let scrollLeft, scrollTop;
+
+    // Handle middle mouse down
+    editor.div.addEventListener('mousedown', function(e) {
+        if (e.button === 1) { // Middle button
+            e.preventDefault();
+            isPanning = true;
+            startX = e.pageX - editor.div.offsetLeft;
+            startY = e.pageY - editor.div.offsetTop;
+            scrollLeft = editor.div.scrollLeft;
+            scrollTop = editor.div.scrollTop;
+            editor.div.style.cursor = 'grabbing';
+            return false;
+        }
+    });
+
+    // Handle mouse move for panning
+    editor.div.addEventListener('mousemove', function(e) {
+        if (!isPanning) return;
+        e.preventDefault();
+        const x = e.pageX - editor.div.offsetLeft;
+        const y = e.pageY - editor.div.offsetTop;
+        const deltaX = x - startX;
+        const deltaY = y - startY;
+        editor.div.scrollLeft = scrollLeft - deltaX;
+        editor.div.scrollTop = scrollTop - deltaY;
+    });
+
+    // Handle mouse up
+    editor.div.addEventListener('mouseup', function(e) {
+        if (e.button === 1) {
+            isPanning = false;
+            editor.div.style.cursor = 'copy';
+        }
+    });
+
+    // Also stop panning if mouse leaves the window
+    window.addEventListener('mouseup', function(e) {
+        if (e.button === 1 && isPanning) {
+            isPanning = false;
+            if (editor.div) editor.div.style.cursor = 'copy';
+        }
+    });
+}
+
+// Menu and Modal Functions
+function toggleMenu(menuId) {
+    const menu = document.getElementById(menuId);
+    const allMenus = document.querySelectorAll('.menu-dropdown');
+
+    // Close all other menus
+    allMenus.forEach(m => {
+        if (m.id !== menuId) {
+            m.style.display = 'none';
+        }
+    });
+
+    // Toggle current menu
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+
+    // Update layer list when opening layer menu
+    if (menuId === 'layerMenu' && menu.style.display === 'block') {
+        updateLayerList();
+    }
+}
+
+// Close menus when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.menu-item')) {
+        document.querySelectorAll('.menu-dropdown').forEach(menu => {
+            menu.style.display = 'none';
+        });
+    }
+});
+
+// Modal functions
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.style.display = 'block';
+
+    // Close any open menus
+    document.querySelectorAll('.menu-dropdown').forEach(menu => {
+        menu.style.display = 'none';
+    });
+
+    // Populate current values
+    if (modalId === 'mapSizeModal') {
+        // Use areaW and areaH which are the actual current dimensions
+        document.getElementById('modalMapWidth').value = editor.areaW || editor.mapWidth || 16;
+        document.getElementById('modalMapHeight').value = editor.areaH || editor.mapHeight || 16;
+    } else if (modalId === 'tileSizeModal') {
+        document.getElementById('modalTileSize').value = editor.cellSize || 32;
+    } else if (modalId === 'tilesetModal') {
+        document.getElementById('modalTilesetUrl').value = document.getElementById('tilemap').value || '';
+    }
+}
+
+function closeModal(modalId) {
+    // If no modalId provided, close all modals
+    if (!modalId) {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = 'none';
+        });
+    } else {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+}
+
+// Apply modal changes
+function applyMapSize() {
+    const width = parseInt(document.getElementById('modalMapWidth').value);
+    const height = parseInt(document.getElementById('modalMapHeight').value);
+
+    // Validate dimensions
+    if (width < 5 || width > 200 || height < 5 || height > 200) {
+        showToast('Map dimensions must be between 5 and 200 tiles', 'error');
+        return;
+    }
+
+    // Warn about large maps
+    if (width > 100 || height > 100) {
+        if (!confirm(`Warning: Large maps (${width}x${height}) may impact performance. Continue?`)) {
+            return;
+        }
+    }
+
+    if (width > 0 && height > 0 && window.editor) {
+        // Store old dimensions
+        const oldWidth = editor.areaW;
+        const oldHeight = editor.areaH;
+
+        // Update map dimensions
+        editor.areaW = width;
+        editor.areaH = height;
+
+        // Resize the tiles arrays to match new dimensions
+        if (editor.tiles) {
+            for (let layer = 0; layer < editor.tiles.length; layer++) {
+                const newLayer = [];
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const index = y * width + x;
+                        // Copy existing tile if within old bounds
+                        if (x < oldWidth && y < oldHeight) {
+                            const oldIndex = y * oldWidth + x;
+                            newLayer[index] = editor.tiles[layer][oldIndex] || -1;
+                        } else {
+                            newLayer[index] = -1; // Empty tile
+                        }
+                    }
+                }
+                editor.tiles[layer] = newLayer;
+            }
+        }
+
+        // Resize the canvas
+        editor.ResizeCanvas();
+
+        // Redraw everything
+        editor.Draw();
+
+        // Save the state for undo
+        editor.saveState();
+
+        showToast(`Map size updated to ${width}x${height}`);
+        closeModal('mapSizeModal');
+    } else if (!window.editor) {
+        showToast('Editor not ready yet. Please try again.', 'error');
+    }
+}
+
+function applyTileSize() {
+    const size = parseInt(document.getElementById('modalTileSize').value);
+
+    if (size > 0 && window.editor && window.selection) {
+        editor.cellSize = size;
+        selection.cellSize = size;
+
+        // Update the selection cells
+        if (selection.updateCells) {
+            selection.updateCells();
+        }
+
+        // Resize canvas to reflect new tile size
+        editor.ResizeCanvas();
+
+        // Redraw everything
+        editor.Draw();
+        if (selection.Draw) {
+            selection.Draw();
+        }
+
+        showToast(`Tile size updated to ${size}px`);
+        closeModal('tileSizeModal');
+    } else if (!window.editor) {
+        showToast('Editor not ready yet. Please try again.', 'error');
+    }
+}
+
+// Function to paste from clipboard
+async function pasteFromClipboard() {
+    try {
+        // Check if clipboard API is available
+        if (!navigator.clipboard) {
+            showToast('Clipboard access not available in this context', 'error');
+            return;
+        }
+
+        // Try to read text from clipboard
+        const text = await navigator.clipboard.readText();
+
+        if (text) {
+            // Set the pasted text into the input field
+            document.getElementById('modalTilesetUrl').value = text;
+            showToast('URL pasted from clipboard', 'success');
+        } else {
+            showToast('Clipboard is empty', 'error');
+        }
+    } catch (err) {
+        console.error('Failed to read clipboard:', err);
+
+        // Fallback for browsers that require user interaction or permissions
+        // Try using the older execCommand approach
+        const input = document.getElementById('modalTilesetUrl');
+        input.focus();
+        input.select();
+
+        try {
+            const success = document.execCommand('paste');
+            if (success) {
+                showToast('URL pasted from clipboard', 'success');
+            } else {
+                showToast('Please use Ctrl+V to paste (clipboard access restricted)', 'info');
+            }
+        } catch (fallbackErr) {
+            // If all else fails, inform the user
+            showToast('Please use Ctrl+V to paste (clipboard access restricted)', 'info');
+        }
+    }
+}
+
+function applyTilesetUrl() {
+    var url = document.getElementById('modalTilesetUrl').value;
+    if (url) {
+        document.getElementById('tilemap').value = url;
+        // Load the new tileset image
+        var img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = function() {
+            if (window.selection) {
+                selection.image = img;
+                selection.updateCells();
+                selection.Draw();
+            }
+            if (window.editor) editor.Draw();
+            showToast('Tileset updated successfully!');
+            closeModal('tilesetModal');
+        };
+        img.onerror = function() {
+            showToast('Failed to load tileset image', 'error');
+        };
+        img.src = url;
+    }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// Menu function implementations
+function newMap() {
+    if (window.editor && confirm('Create a new map? This will clear the current map.')) {
+        editor.LoadMap();
+        showToast('New map created');
+    } else if (!window.editor) {
+        showToast('Editor not ready yet. Please try again.', 'error');
+    }
+}
+
+function clearMap() {
+    if (window.editor && confirm('Clear the entire map? This cannot be undone.')) {
+        editor.LoadMap();
+        showToast('Map cleared');
+    } else if (!window.editor) {
+        showToast('Editor not ready yet. Please try again.', 'error');
+    }
+}
+
+function selectAll() {
+    // Select entire map
+    showToast('Select all not yet implemented');
+}
+
+function deselectAll() {
+    // Clear selection
+    showToast('Deselect all not yet implemented');
+}
+
+function toggleGrid() {
+    if (window.editor) {
+        // Toggle grid visibility
+        editor.drawGrid = !editor.drawGrid;
+        showToast(editor.drawGrid ? 'Grid enabled' : 'Grid disabled');
+        editor.Draw();
+    } else {
+        showToast('Editor not ready yet. Please try again.', 'error');
+    }
+}
+
+function toggleLayerTransparency() {
+    if (window.editor) {
+        editor.showLayerTransparency = !editor.showLayerTransparency;
+        const button = document.querySelector('[onclick="toggleLayerTransparency()"]');
+        if (button) {
+            button.textContent = editor.showLayerTransparency ? '\uD83D\uDC41 Hide Other Layers' : '\uD83D\uDC41 Show Other Layers';
+        }
+        showToast(editor.showLayerTransparency ? 'Layer transparency enabled' : 'Layer transparency disabled');
+        editor.Draw();
+    } else {
+        showToast('Editor not ready yet. Please try again.', 'error');
+    }
+}
+
+function addLayer() {
+    // Add a new layer
+    showToast('Add layer not yet implemented');
+}
+
+function removeLayer() {
+    // Remove current layer
+    showToast('Remove layer not yet implemented');
+}
+
+function renameLayer() {
+    // Rename current layer
+    showToast('Rename layer not yet implemented');
+}
+
+function mergeDown() {
+    // Merge current layer with the one below
+    showToast('Merge down not yet implemented');
+}
+
+// Export PNG function (legacy - exports all layers)
+function exportPNG() {
+    if (window.editor && editor.exportScreenshot) {
+        editor.exportScreenshot();
+        showToast('Exporting PNG...', 'info');
+    } else {
+        showToast('Editor not ready yet. Please try again.', 'error');
+    }
+}
+
+// Generate a small preview canvas for a specific layer
+function generateLayerPreview(layerIndex, maxWidth, maxHeight) {
+    if (!window.editor || !window.selection || !selection.image) {
+        return null;
+    }
+
+    var cs = editor.cellSize;
+    var mapWidth = editor.areaW * cs;
+    var mapHeight = editor.areaH * cs;
+
+    // Calculate scale to fit within max dimensions while maintaining aspect ratio
+    var scale = Math.min(maxWidth / mapWidth, maxHeight / mapHeight);
+    var previewWidth = Math.max(1, Math.floor(mapWidth * scale));
+    var previewHeight = Math.max(1, Math.floor(mapHeight * scale));
+
+    var canvas = document.createElement('canvas');
+    canvas.width = previewWidth;
+    canvas.height = previewHeight;
+    var ctx = canvas.getContext('2d');
+
+    // Checkerboard background to show transparency
+    ctx.fillStyle = '#1a1a2a';
+    ctx.fillRect(0, 0, previewWidth, previewHeight);
+    var checkSize = 4;
+    ctx.fillStyle = '#252535';
+    for (var cy = 0; cy < previewHeight; cy += checkSize) {
+        for (var cx = 0; cx < previewWidth; cx += checkSize) {
+            if ((Math.floor(cx / checkSize) + Math.floor(cy / checkSize)) % 2 === 0) {
+                ctx.fillRect(cx, cy, checkSize, checkSize);
+            }
+        }
+    }
+
+    // Draw the layer tiles scaled down
+    ctx.imageSmoothingEnabled = false;
+    var layer = editor.tiles[layerIndex];
+    if (layer && layer.length > 0) {
+        for (var j = 0; j < layer.length; j++) {
+            var tile = layer[j];
+            ctx.drawImage(
+                selection.image,
+                tile[2], tile[3], cs, cs,  // source
+                tile[0] * scale, tile[1] * scale, cs * scale, cs * scale  // dest
+            );
+        }
+    }
+
+    return canvas;
+}
+
+// Open Export PNG modal with layer options
+function openExportPNGModal() {
+    if (!window.editor) {
+        showToast('Editor not ready yet. Please try again.', 'error');
+        return;
+    }
+
+    // Populate layer checkboxes with previews
+    var container = document.getElementById('exportLayerCheckboxes');
+    container.innerHTML = '';
+
+    var layerCount = editor.getLayerCount ? editor.getLayerCount() : 1;
+    for (var i = 0; i < layerCount; i++) {
+        var label = document.createElement('label');
+        label.style.cssText = 'display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px; border-radius: 4px; transition: background 0.2s;';
+        label.onmouseover = function() { this.style.background = '#3a3d4a'; };
+        label.onmouseout = function() { this.style.background = 'transparent'; };
+
+        var checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true; // All selected by default
+        checkbox.value = i;
+        checkbox.className = 'export-layer-checkbox';
+        checkbox.style.cssText = 'width: 16px; height: 16px; cursor: pointer; accent-color: #667eea; flex-shrink: 0;';
+
+        // Generate layer preview thumbnail
+        var previewCanvas = generateLayerPreview(i, 48, 32);
+        if (previewCanvas) {
+            previewCanvas.style.cssText = 'border: 1px solid #3a3d4a; border-radius: 3px; flex-shrink: 0;';
+        }
+
+        var text = document.createElement('span');
+        text.textContent = 'Layer ' + (i + 1);
+        text.style.cssText = 'color: #e2e8f0; flex-grow: 1;';
+
+        // Show tile count for this layer
+        var tileCount = (editor.tiles[i] && editor.tiles[i].length) || 0;
+        var countBadge = document.createElement('span');
+        countBadge.textContent = tileCount + ' tiles';
+        countBadge.style.cssText = 'color: #888; font-size: 11px; flex-shrink: 0;';
+
+        label.appendChild(checkbox);
+        if (previewCanvas) {
+            label.appendChild(previewCanvas);
+        }
+        label.appendChild(text);
+        label.appendChild(countBadge);
+        container.appendChild(label);
+    }
+
+    openModal('exportPNGModal');
+}
+
+// Select/deselect all export layer checkboxes
+function selectAllExportLayers(selectAll) {
+    var checkboxes = document.querySelectorAll('.export-layer-checkbox');
+    checkboxes.forEach(function(cb) {
+        cb.checked = selectAll;
+    });
+}
+
+// Export selected layers as PNG
+function exportSelectedLayers() {
+    if (!window.editor) {
+        showToast('Editor not ready yet. Please try again.', 'error');
+        return;
+    }
+
+    // Get selected layer indices
+    var checkboxes = document.querySelectorAll('.export-layer-checkbox:checked');
+    var selectedLayers = [];
+    checkboxes.forEach(function(cb) {
+        selectedLayers.push(parseInt(cb.value));
+    });
+
+    if (selectedLayers.length === 0) {
+        showToast('Please select at least one layer to export', 'error');
+        return;
+    }
+
+    closeModal('exportPNGModal');
+
+    if (editor.exportLayerPNG) {
+        editor.exportLayerPNG(selectedLayers);
+
+        var layerCount = editor.getLayerCount ? editor.getLayerCount() : 1;
+        if (selectedLayers.length === layerCount) {
+            showToast('Exporting all layers...', 'info');
+        } else if (selectedLayers.length === 1) {
+            showToast('Exporting Layer ' + (selectedLayers[0] + 1) + '...', 'info');
+        } else {
+            showToast('Exporting ' + selectedLayers.length + ' layers...', 'info');
+        }
+    } else if (editor.exportScreenshot) {
+        // Fallback to old method
+        editor.exportScreenshot();
+        showToast('Exporting PNG...', 'info');
+    } else {
+        showToast('Layer export not available. Update required.', 'error');
+    }
+}
+
+// Save project function wrapper for menu
+function saveProjectFromMenu() {
+    if (window.editor) {
+        editor.Export();
+    } else {
+        showToast('Editor not ready yet. Please try again.', 'error');
+    }
+}
+</script>
+
+</body>
+</html>
