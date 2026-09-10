@@ -111,6 +111,7 @@ function Editor(areaW, areaH){
 			self.startPan(e);
 			return;
 		}
+		self.mode = self.toolType === 'collision' ? 1 : 0;
 		if (self.mode === 0 && !self.isLayerVisible(self.layer)) {
 			if (window.showToast) showToast('Layer ' + (self.layer + 1) + ' is hidden. Show it in the Layer menu to draw on it.', 'info');
 			return;
@@ -125,6 +126,7 @@ function Editor(areaW, areaH){
 				case 'rowFill': if (hasTile) self.fillRow(self.mouseX, self.mouseY); break;
 				case 'columnFill': if (hasTile) self.fillColumn(self.mouseX, self.mouseY); break;
 				case 'eraser': self.removeBlock(); break;
+				case 'collision': self.placeBlock(); break;
 				default: if (hasTile) self.placeBlock();
 			}
 		}
@@ -672,6 +674,14 @@ function Editor(areaW, areaH){
 		return true;
 	}
 
+	this.clearCollision = function(){
+		if (this.blocks.length === 0) return false;
+		this.saveState();
+		this.blocks = [];
+		this.Draw();
+		return true;
+	}
+
 	this.clearLayer = function(index){
 		if (!this.tiles[index] || this.tiles[index].length === 0) return false;
 		this.saveState();
@@ -769,9 +779,14 @@ function Editor(areaW, areaH){
 		}
 
 		if (this.drawBlocks) {
-			this.ctx.strokeStyle = "#c00";
+			// Solid cells read as a red film with a hard edge, so they stay
+			// visible over any tileset and over the grid.
+			this.ctx.fillStyle = "rgba(230,57,70,0.35)";
+			this.ctx.strokeStyle = "rgba(200,30,45,0.9)";
+			this.ctx.lineWidth = 1;
 			for (var i = 0; i < this.blocks.length; i++) {
-				this.ctx.strokeRect(this.blocks[i][0] - 0.5, this.blocks[i][1] - 0.5, this.blocks[i][2], this.blocks[i][3]);
+				this.ctx.fillRect(this.blocks[i][0], this.blocks[i][1], this.blocks[i][2], this.blocks[i][3]);
+				this.ctx.strokeRect(this.blocks[i][0] + 0.5, this.blocks[i][1] + 0.5, this.blocks[i][2] - 1, this.blocks[i][3] - 1);
 			}
 		}
 
@@ -962,6 +977,8 @@ window.addEventListener("mousemove", function(s) {
 	if (editor.mouseLeft) {
 		if (editor.toolType === 'pencil') {
 			if (selection && selection.selected != null) editor.placeBlock();
+		} else if (editor.toolType === 'collision') {
+			editor.placeBlock();
 		} else if (editor.toolType === 'eraser') {
 			editor.removeBlock();
 		}
