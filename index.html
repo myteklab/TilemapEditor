@@ -619,6 +619,11 @@
         image-rendering: pixelated;
         image-rendering: crisp-edges;
         display: block;
+        touch-action: none;
+    }
+
+    #EditorDiv, #SelectionCanvas {
+        touch-action: none;
     }
 
     #EditorCanvas {
@@ -849,6 +854,11 @@
         <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1" fill="currentColor" stroke="none"/></symbol>
         <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
         <symbol id="i-cut" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9"/><path d="M14.5 14.5 20 20"/><path d="M8.1 8.1 12 12"/></symbol>
+        <symbol id="i-flip-h" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M8 7H4v10h4"/><path d="M16 7h4v10h-4"/><path d="M8 12H4"/><path d="M20 12h-4"/></symbol>
+        <symbol id="i-flip-v" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M7 8V4h10v4"/><path d="M7 16v4h10v-4"/><path d="M12 8V4"/><path d="M12 20v-4"/></symbol>
+        <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></symbol>
+        <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+        <symbol id="i-file-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="m10 13-2 2 2 2"/><path d="m14 13 2 2-2 2"/></symbol>
         <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></symbol>
         <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></symbol>
         <symbol id="i-crosshair" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></symbol>
@@ -874,6 +884,7 @@
             <div class="menu-dropdown" id="fileMenu">
                 <div class="menu-option" onclick="saveProject()"><svg class="icon"><use href="#i-save"/></svg><span class="label">Save</span><span class="shortcut">Ctrl+S</span></div>
                 <div class="menu-option" onclick="openExportPNGModal()"><svg class="icon"><use href="#i-image"/></svg><span class="label">Export PNG...</span></div>
+                <div class="menu-option" onclick="exportTiled()"><svg class="icon"><use href="#i-file-code"/></svg><span class="label">Export Tiled Map (.tmj)</span></div>
                 <div class="menu-option" data-host-feature="gamebuilder" onclick="openModal('gameBuilderModal')"><svg class="icon"><use href="#i-gamepad"/></svg><span class="label">Send to GameBuilder...</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-option" onclick="openProjectFile()"><svg class="icon"><use href="#i-folder"/></svg><span class="label">Open Project File...</span></div>
@@ -892,6 +903,9 @@
                 <div class="menu-option" id="pasteItem" onclick="pasteClipboard()"><svg class="icon"><use href="#i-clipboard"/></svg><span class="label">Paste</span><span class="shortcut">Ctrl+V</span></div>
                 <div class="menu-option" id="deleteItem" onclick="deleteSelection()"><svg class="icon"><use href="#i-trash"/></svg><span class="label">Delete Selection</span><span class="shortcut">Del</span></div>
                 <div class="menu-option" onclick="selectAll()"><svg class="icon"><use href="#i-select"/></svg><span class="label">Select All</span><span class="shortcut">Ctrl+A</span></div>
+                <div class="menu-divider"></div>
+                <div class="menu-option" id="flipHItem" onclick="flipBrush(1)"><span class="check"><svg class="icon"><use href="#i-check"/></svg></span><svg class="icon"><use href="#i-flip-h"/></svg><span class="label">Flip Brush Left-Right</span><span class="shortcut">Shift+H</span></div>
+                <div class="menu-option" id="flipVItem" onclick="flipBrush(2)"><span class="check"><svg class="icon"><use href="#i-check"/></svg></span><svg class="icon"><use href="#i-flip-v"/></svg><span class="label">Flip Brush Upside Down</span><span class="shortcut">Shift+V</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-option" onclick="openModal('mapSizeModal')"><svg class="icon"><use href="#i-resize"/></svg><span class="label">Map Size...</span></div>
                 <div class="menu-option" onclick="openModal('tileSizeModal')"><svg class="icon"><use href="#i-tile"/></svg><span class="label">Tile Size...</span></div>
@@ -962,7 +976,17 @@
                 <label for="modalTileSize">Tile size (pixels)</label>
                 <input type="number" id="modalTileSize" min="8" max="128" value="16">
             </div>
-            <div class="modal-note"><svg class="icon"><use href="#i-bulb"/></svg><span>Match the tileset image: 16, 32, 48 and 64 are the usual sizes. Placed tiles stay on their grid cells.</span></div>
+            <div class="btn-row" style="margin-bottom: 16px;">
+                <div class="modal-field" style="flex: 1; margin: 0;">
+                    <label for="modalTileSpacing">Gap between tiles</label>
+                    <input type="number" id="modalTileSpacing" min="0" max="16" value="0">
+                </div>
+                <div class="modal-field" style="flex: 1; margin: 0;">
+                    <label for="modalTileMargin">Border around the sheet</label>
+                    <input type="number" id="modalTileMargin" min="0" max="64" value="0">
+                </div>
+            </div>
+            <div class="modal-note"><svg class="icon"><use href="#i-bulb"/></svg><span>Match the tileset image: 16, 32, 48 and 64 are the usual sizes. Sheets with a thin line between tiles want a gap of 1. Placed tiles stay on their grid cells.</span></div>
         </div>
         <div class="modal-buttons">
             <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
@@ -1001,6 +1025,7 @@
                     <li>Layer 1 becomes the ground the player walks on</li>
                     <li>The other visible layers become decoration in front of it</li>
                     <li>Solid cells decide which ground tiles are walls; with none marked, every ground tile is solid</li>
+                    <li>GameBuilder has no flipped tiles, so mirrored tiles arrive the normal way round</li>
                 </ul>
             </div>
             <div class="modal-note" id="gameBuilderNote"><svg class="icon"><use href="#i-info"/></svg><span></span></div>
@@ -1048,14 +1073,15 @@
                     <li>Layer 1 is the background; higher layers draw on top</li>
                     <li>Press 1 to 9 or use the Layer menu to switch, and add up to 10 layers</li>
                     <li>Other layers are faded so you can see what you are drawing over. Turn that off in View</li>
-                    <li>The eye in the Layer menu hides a layer; H hides or shows the current one. Layers can be renamed</li>
+                    <li>The eye in the Layer menu hides a layer; H hides or shows the current one. Layers can be renamed and moved up or down the stack</li>
                 </ul>
 
                 <h3><svg class="icon"><use href="#i-tileset"/></svg>Tileset</h3>
                 <ul>
                     <li>File, then Change Tileset: paste an image URL or choose an image</li>
                     <li>Use the + and - buttons above the palette to zoom the tiles</li>
-                    <li>Set the tile size (Edit, then Tile Size) to match the image before drawing</li>
+                    <li>Set the tile size (Edit, then Tile Size) to match the image before drawing; sheets with a thin line between tiles want a gap of 1</li>
+                    <li>Shift+H and Shift+V mirror the brush, a block included, and the mirrored tiles are saved that way</li>
                     <li class="help-caution">Swapping to a tileset with a different layout changes what placed tiles look like</li>
                 </ul>
 
@@ -1070,6 +1096,8 @@
                 <ul>
                     <li>Ctrl+S saves your project</li>
                     <li>Export PNG makes an image of the layers you choose, with transparency</li>
+                    <li>Export Tiled Map writes a .tmj file that Tiled, Phaser, Godot and most engines can read</li>
+                    <li>On a touch screen, one finger draws and two fingers pan and zoom</li>
                 </ul>
             </div>
         </div>
@@ -1098,6 +1126,7 @@
                 <tr><td>Ctrl+V</td><td>Make the copy the brush</td></tr>
                 <tr><td>Delete</td><td>Clear the selection on the current layer</td></tr>
                 <tr><td>Ctrl+A</td><td>Select the whole map</td></tr>
+                <tr><td>Shift+H / Shift+V</td><td>Flip the brush left-right / upside down</td></tr>
                 <tr><td>1 to 9</td><td>Switch layer</td></tr>
                 <tr><td>G</td><td>Show or hide the grid</td></tr>
                 <tr><td>H</td><td>Hide or show the current layer</td></tr>
@@ -1406,6 +1435,10 @@ document.addEventListener('keydown', function(e) {
         return;
     }
     if (e.ctrlKey || e.metaKey || e.altKey || !window.editor) return;
+    if (e.shiftKey && (e.key === 'H' || e.key === 'V')) {
+        flipBrush(e.key === 'H' ? 1 : 2);
+        return;
+    }
 
     switch (e.key.toLowerCase()) {
         case 'p': selectTool('pencil'); break;
@@ -1526,6 +1559,8 @@ function updateLayerList() {
         item.className = 'menu-option' + (i === editor.layer ? ' checked' : '') + (visible ? '' : ' hidden-layer');
         var count = editor.tiles[i] ? editor.tiles[i].length : 0;
         item.innerHTML = '<button class="eye" title="' + (visible ? 'Hide' : 'Show') + '"><svg class="icon"><use href="' + (visible ? '#i-eye' : '#i-eye-off') + '"/></svg></button>' +
+            '<button class="eye mv" data-dir="-1" title="Move up the list (drawn further back)"><svg class="icon"><use href="#i-up"/></svg></button>' +
+            '<button class="eye mv" data-dir="1" title="Move down the list (drawn further in front)"><svg class="icon"><use href="#i-down"/></svg></button>' +
             '<span class="check"><svg class="icon"><use href="#i-chevron"/></svg></span>' +
             '<span class="label"></span><span class="shortcut"></span>';
         item.querySelector('.label').textContent = layerLabel(i);
@@ -1537,6 +1572,14 @@ function updateLayerList() {
             editor.setLayerVisible(index, !editor.isLayerVisible(index));
             updateLayerList();
         }; })(i);
+        item.querySelectorAll('.mv').forEach(function(btn) {
+            var dir = parseInt(btn.dataset.dir);
+            if ((dir < 0 && i === 0) || (dir > 0 && i === editor.tiles.length - 1)) btn.style.visibility = 'hidden';
+            btn.onclick = (function(index) { return function(e) {
+                e.stopPropagation();
+                if (editor.moveLayer(index, index + dir)) updateLayerList();
+            }; })(i);
+        });
         layerList.appendChild(item);
     }
     var indicator = document.getElementById('currentLayerIndicator');
@@ -1691,7 +1734,7 @@ var hoverCanvas, hoverCtx, hoverPending = false;
 function updateStatus() {
     if (!window.editor) return;
     document.getElementById('statusMap').textContent = editor.areaW + ' x ' + editor.areaH;
-    document.getElementById('statusTile').textContent = editor.cellSize + ' px';
+    document.getElementById('statusTile').textContent = editor.cellSize + ' px' + (editor.spacing ? ' +' + editor.spacing : '');
     document.getElementById('statusZoom').textContent = Math.round(editor.zoom * 100) + '%';
     document.getElementById('statusCell').textContent = lastHoverCell ? lastHoverCell[0] + ', ' + lastHoverCell[1] : '-';
     var picked = 'none';
@@ -1701,6 +1744,7 @@ function updateStatus() {
         picked = '#' + selection.selected;
         if (selection.stampW > 1 || selection.stampH > 1) picked += ' (' + selection.stampW + ' x ' + selection.stampH + ')';
     }
+    if (editor.brushFlip) picked += (editor.brushFlip & 1 ? ', mirrored' : '') + (editor.brushFlip & 2 ? ', upside down' : '');
     if (editor.selRect) picked += ', selected ' + selectionSize();
     document.getElementById('statusPicked').textContent = picked;
 }
@@ -1787,7 +1831,7 @@ function drawHover(cell) {
             hoverCtx.imageSmoothingEnabled = false;
             for (var by = box.y0; by <= box.y1; by++) for (var bx = box.x0; bx <= box.x1; bx++) {
                 var bt = editor.stampTile(bx, by, box.x0, box.y0);
-                if (bt) hoverCtx.drawImage(selection.image, bt[0], bt[1], cs, cs, bx * cs, by * cs, cs, cs);
+                if (bt) editor.drawTile(hoverCtx, [bx * cs, by * cs, bt[0], bt[1], 0, bt[3] || 0], cs);
             }
             hoverCtx.globalAlpha = 1;
         } else {
@@ -1806,12 +1850,12 @@ function drawHover(cell) {
     // block as a pattern from the cell, the pencil stamps it once.
     var size = hasTile ? editor.brushSize() : [1, 1], w = size[0], h = size[1];
     var cells = [];
-    var pattern = function(gx, gy) { var t = hasTile ? editor.stampTile(gx, gy, cell[0], cell[1]) : [0, 0]; if (t) cells.push([gx, gy, t[0], t[1]]); };
+    var pattern = function(gx, gy) { var t = hasTile ? editor.stampTile(gx, gy, cell[0], cell[1]) : [0, 0]; if (t) cells.push([gx, gy, t[0], t[1], t[3]]); };
     if (tool === 'rowFill') { for (var x = 0; x < editor.areaW; x++) pattern(x, cell[1]); }
     else if (tool === 'columnFill') { for (var y = 0; y < editor.areaH; y++) pattern(cell[0], y); }
     else if ((tool === 'pencil' || tool === 'rect') && hasTile) {
         for (var r = 0; r < h; r++) for (var c = 0; c < w; c++) {
-            if (cell[0] + c < editor.areaW && cell[1] + r < editor.areaH) { var t = editor.brushTile(c, r); if (t) cells.push([cell[0] + c, cell[1] + r, t[0], t[1]]); }
+            if (cell[0] + c < editor.areaW && cell[1] + r < editor.areaH) { var t = editor.brushTile(c, r); if (t) cells.push([cell[0] + c, cell[1] + r, t[0], t[1], t[3]]); }
         }
         if (cells.length === 0) cells.push([cell[0], cell[1], 0, 0]);
     }
@@ -1821,7 +1865,7 @@ function drawHover(cell) {
         hoverCtx.globalAlpha = 0.55;
         hoverCtx.imageSmoothingEnabled = false;
         for (var i = 0; i < cells.length; i++) {
-            hoverCtx.drawImage(selection.image, cells[i][2], cells[i][3], cs, cs, cells[i][0] * cs, cells[i][1] * cs, cs, cs);
+            editor.drawTile(hoverCtx, [cells[i][0] * cs, cells[i][1] * cs, cells[i][2], cells[i][3], 0, cells[i][4] || 0], cs);
         }
         hoverCtx.globalAlpha = 1;
     }
@@ -1885,6 +1929,8 @@ function openModal(modalId) {
             document.getElementById('modalMapHeight').value = editor.areaH;
         } else if (modalId === 'tileSizeModal') {
             document.getElementById('modalTileSize').value = editor.cellSize;
+            document.getElementById('modalTileSpacing').value = editor.spacing;
+            document.getElementById('modalTileMargin').value = editor.margin;
         } else if (modalId === 'tilesetModal') {
             var url = document.getElementById('tilemap').value || '';
             document.getElementById('modalTilesetUrl').value = url.indexOf('data:') === 0 ? '' : url;
@@ -1926,16 +1972,31 @@ function applyMapSize() {
 
 function applyTileSize() {
     var size = parseInt(document.getElementById('modalTileSize').value);
+    var spacing = parseInt(document.getElementById('modalTileSpacing').value) || 0;
+    var margin = parseInt(document.getElementById('modalTileMargin').value) || 0;
     if (!(size >= 8 && size <= 128)) {
         showToast('Tile size must be between 8 and 128 pixels.', 'error');
         return;
     }
+    if (!(spacing >= 0 && spacing <= 16 && margin >= 0 && margin <= 64)) {
+        showToast('The gap can be 0 to 16 pixels and the border 0 to 64.', 'error');
+        return;
+    }
     if (!window.editor || !window.selection) return;
-    editor.setTileSize(size);
+    editor.setTileGeometry(size, spacing, margin);
     fitPaletteScale();
     onViewChange();
-    showToast('Tile size is now ' + size + ' px');
+    showToast('Tiles are ' + size + ' px' + (spacing ? ' with a ' + spacing + ' px gap' : '') + (margin ? ', ' + margin + ' px in from the edge' : ''));
     closeModal();
+}
+
+function flipBrush(bit) {
+    if (!window.editor) return;
+    editor.flipBrush(bit);
+    setChecked('flipHItem', editor.brushFlip & 1);
+    setChecked('flipVItem', editor.brushFlip & 2);
+    drawHover(lastHoverCell);
+    updateStatus();
 }
 
 async function pasteFromClipboard() {
@@ -1985,6 +2046,62 @@ document.getElementById('tilesetFileInput').addEventListener('change', function(
     reader.onload = function() { applyTilesetUrl(reader.result); };
     reader.readAsDataURL(file);
 });
+
+// ---- Tiled -----------------------------------------------------------------
+
+// Tiled's JSON map (.tmj): one tile layer per layer here, gids as index + 1
+// with Tiled's own flip bits, and the solid cells as rectangles on an object
+// layer, merged along each row. The tileset is referenced by its URL.
+function buildTiledMap() {
+    var cs = editor.cellSize, w = editor.areaW, h = editor.areaH;
+    var FLIP_H = 0x80000000, FLIP_V = 0x40000000;
+    var layers = [], nextId = 1;
+    for (var l = 0; l < editor.tiles.length; l++) {
+        var data = new Array(w * h).fill(0);
+        var layer = editor.tiles[l];
+        for (var i = 0; i < layer.length; i++) {
+            var t = layer[i], gx = t[0] / cs, gy = t[1] / cs;
+            if (gx >= w || gy >= h) continue;
+            var gid = t[4] + 1;
+            if (t[5] & 1) gid += FLIP_H;
+            if (t[5] & 2) gid += FLIP_V;
+            data[gy * w + gx] = gid;
+        }
+        layers.push({ id: nextId++, type: 'tilelayer', name: editor.metaFor(l).name || ('Layer ' + (l + 1)), width: w, height: h, x: 0, y: 0, opacity: 1, visible: editor.isLayerVisible(l), data: data });
+    }
+    var solid = {}, objects = [], nextObject = 1;
+    for (var b = 0; b < editor.blocks.length; b++) solid[(editor.blocks[b][0] / cs) + ',' + (editor.blocks[b][1] / cs)] = true;
+    for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+            if (!solid[x + ',' + y]) continue;
+            var run = 1;
+            while (solid[(x + run) + ',' + y]) run++;
+            objects.push({ id: nextObject++, name: '', type: 'solid', x: x * cs, y: y * cs, width: run * cs, height: cs, rotation: 0, visible: true });
+            x += run - 1;
+        }
+    }
+    if (objects.length) layers.push({ id: nextId++, type: 'objectgroup', name: 'Solid', x: 0, y: 0, opacity: 1, visible: true, draworder: 'topdown', objects: objects });
+    var img = selection.image;
+    return {
+        type: 'map', version: '1.10', tiledversion: '1.10.2', orientation: 'orthogonal', renderorder: 'right-down', infinite: false,
+        width: w, height: h, tilewidth: cs, tileheight: cs, compressionlevel: -1,
+        nextlayerid: nextId, nextobjectid: nextObject,
+        tilesets: [{ firstgid: 1, name: 'tileset', image: document.getElementById('tilemap').value, imagewidth: img.width, imageheight: img.height,
+            tilewidth: cs, tileheight: cs, spacing: editor.spacing, margin: editor.margin, columns: editor.sheetCols(), tilecount: editor.sheetCols() * editor.sheetRows() }],
+        layers: layers
+    };
+}
+
+function exportTiled() {
+    if (!window.editor || !window.selection || !selection.image) return;
+    var text = JSON.stringify(buildTiledMap());
+    var filename = 'tilemap.tmj';
+    var dataUrl = 'data:application/json;base64,' + btoa(unescape(encodeURIComponent(text)));
+    var ev = new CustomEvent('tilemapeditor:exportFile', { cancelable: true, detail: { dataUrl: dataUrl, filename: filename, mime: 'application/json', text: text } });
+    if (!window.dispatchEvent(ev)) return;
+    downloadText(filename, text, 'application/json');
+    showToast('Downloaded ' + filename + '. The tileset image is referenced by its URL.');
+}
 
 // ---- GameBuilder -----------------------------------------------------------
 

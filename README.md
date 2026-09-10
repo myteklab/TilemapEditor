@@ -7,14 +7,16 @@ A browser-based tile map editor for building game levels. Vanilla JavaScript and
 - **Layers**: background, middle, foreground and up to 10 in all, with the other layers faded while you draw
 - **Tools**: pencil, eraser, fill, fill erase, row fill, column fill, box fill, select, solid. Fill replaces a connected run of the same tile, or floods an empty area
 - **Copy and paste**: select a region, Ctrl+C or Ctrl+X, then Ctrl+V makes it the brush
-- **Custom tilesets**: paste an image URL or choose an image file; the palette zooms so small tiles stay pickable
+- **Custom tilesets**: paste an image URL or choose an image file; sheets with a gap between tiles or a border work too; the palette zooms so small tiles stay pickable
+- **Flipped tiles**: mirror the brush left-right or upside down, blocks included, and the flips are saved
 - **Map and tile size** changes keep every tile on its grid cell
 - **Zoom and pan**: wheel zooms toward the pointer (25% to 400%), Space+drag or middle-drag pans
 - **Undo and redo** across drawing, layer changes, resizes and tileset swaps
 - **Hover preview**: a ghost of the picked tile shows where it will land
 - **Solid cells**: mark walls the game should not let the player through, saved with the map
-- **Layers** can be hidden and named
-- **Export**: the project as a JSON file, any set of layers as a transparent PNG, or a GameBuilder project
+- **Layers** can be hidden, named and reordered
+- **Touch**: one finger draws, two fingers pan and zoom
+- **Export**: the project as a JSON file, any set of layers as a transparent PNG, a Tiled map (.tmj) or a GameBuilder project
 
 ## Getting Started
 
@@ -34,11 +36,12 @@ Click a tile in the palette on the right, then draw on the map.
 tileset URL and the level text:
 
 ```js
-levels[1] = [[cellSize, 0, width, height], [layer, layer, ...], [collisions], [objects]];
+levels[1] = [[cellSize, spacing, width, height, margin], [layer, layer, ...], [collisions], [objects], [[name, visible], ...]];
 ```
 
-Each layer is a list of `[tileIndex, gridX, gridY]`. Tile indexes count across the tileset image left to right, top to
-bottom, at the current tile size.
+Each layer is a list of `[tileIndex, gridX, gridY]`, or `[tileIndex, gridX, gridY, flags]` for a flipped tile (1 =
+left-right, 2 = upside down). Tile indexes count across the tileset image left to right, top to bottom, at the current
+tile size, gap and border. Collisions are `[gridX, gridY]` cells.
 
 ## Keyboard Shortcuts
 
@@ -49,6 +52,7 @@ bottom, at the current tile size.
 | B, M, S | Box fill, Select, Solid |
 | Ctrl+C / X / V | Copy or cut the selection, paste it as the brush |
 | Delete, Ctrl+A | Clear the selection, select all |
+| Shift+H / Shift+V | Flip the brush left-right / upside down |
 | G | Show or hide the grid |
 | H | Hide or show the current layer |
 | + / - / 0 | Zoom in, zoom out, reset to 100% |
@@ -65,6 +69,7 @@ and call `preventDefault()` to take them over:
 
 - `tilemapeditor:save` with `detail.data`, the project JSON string
 - `tilemapeditor:exportImage` with `detail.dataUrl` and `detail.filename`
+- `tilemapeditor:exportFile` with `detail.dataUrl`, `detail.filename`, `detail.mime` and `detail.text` (the Tiled map)
 - `tilemapeditor:pickTileset` with `detail.library` (true for "Browse the library"), after which the host calls
   `applyTilesetUrl(url)`
 - `tilemapeditor:exportToGameBuilder` with `detail.projectData`, a GameBuilder project (save format 3.1) whose

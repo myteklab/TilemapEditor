@@ -5,15 +5,21 @@ function StartEditor(){
 	editor = new Editor(50, 30);
 }
 
-// Tiles are stored per layer as [px, py, srcX, srcY, tileIndex]: canvas pixel
-// position, tileset pixel position, and the index the saved format keeps.
-// Index is the only one that survives a save, srcX/srcY are recomputed from it
-// on load using the tileset width, so the two must always agree.
+// Tiles are stored per layer as [px, py, srcX, srcY, tileIndex, flags]: canvas
+// pixel position, tileset pixel position, the index the saved format keeps,
+// and flip bits (1 = mirrored left-right, 2 = upside down). Index and flags
+// are what survive a save; srcX/srcY are recomputed from the index and the
+// sheet geometry (tile size, spacing, margin) on load, so they must agree.
 function Editor(areaW, areaH){
 	this.areaW = areaW;
 	this.areaH = areaH;
 	this.cellSize = 16;
+	// Gap between tiles and border around the sheet, in pixels. Most packed
+	// sheets are 0/0; Kenney's spaced sheets are 1/0.
 	this.spacing = 0;
+	this.margin = 0;
+	this.FLIP_H = 1;
+	this.FLIP_V = 2;
 
 	this.zoom = 1;
 	this.minZoom = 0.25;
@@ -116,6 +122,7 @@ function Editor(areaW, areaH){
 			if (window.showToast) showToast('Layer ' + (self.layer + 1) + ' is hidden. Show it in the Layer menu to draw on it.', 'info');
 			return;
 		}
+		self.lastStrokeCell = [Math.floor(self.mouseX / self.cellSize), Math.floor(self.mouseY / self.cellSize)];
 		if (e.button === 0) {
 			self.mouseLeft = true;
 			self.strokeOpen = false;
@@ -205,6 +212,22 @@ function Editor(areaW, areaH){
 		this.metaFor(i).name = name;
 	}
 
+	// Tileset geometry: where tile (col, row) sits on the sheet.
+	this.sheetStep = function(){ return this.cellSize + this.spacing; }
+	this.sheetCols = function(){
+		var w = selection && selection.image ? selection.image.width : this.cellSize;
+		return Math.max(1, Math.floor((w - this.margin + this.spacing) / this.sheetStep()));
+	}
+	this.sheetRows = function(){
+		var h = selection && selection.image ? selection.image.height : this.cellSize;
+		return Math.max(1, Math.floor((h - this.margin + this.spacing) / this.sheetStep()));
+	}
+	this.srcFor = function(index){
+		var cols = this.sheetCols();
+		var row = Math.floor(index / cols), col = index - row * cols;
+		return [this.margin + col * this.sheetStep(), this.margin + row * this.sheetStep()];
+	}
+
 	this.tilesetUrl = function(){
 		var el = $("tilemap");
 		return el ? el.value : '';
@@ -222,6 +245,8 @@ function Editor(areaW, areaH){
 			areaW: this.areaW,
 			areaH: this.areaH,
 			cellSize: this.cellSize,
+			spacing: this.spacing,
+			margin: this.margin,
 			tileset: this.tilesetUrl()
 		};
 	}
@@ -232,10 +257,13 @@ function Editor(areaW, areaH){
 		this.objects = JSON.parse(JSON.stringify(state.objects));
 		this.layerMeta = JSON.parse(JSON.stringify(state.layerMeta || []));
 		this.layer = Math.min(state.layer, this.tiles.length - 1);
-		var sizeChanged = state.areaW !== this.areaW || state.areaH !== this.areaH || state.cellSize !== this.cellSize;
+		var sizeChanged = state.areaW !== this.areaW || state.areaH !== this.areaH || state.cellSize !== this.cellSize
+			|| (state.spacing || 0) !== this.spacing || (state.margin || 0) !== this.margin;
 		this.areaW = state.areaW;
 		this.areaH = state.areaH;
 		this.cellSize = state.cellSize;
+		this.spacing = state.spacing || 0;
+		this.margin = state.margin || 0;
 		if (sizeChanged) {
 			this.ResizeCanvas();
 			if (selection) { selection.updateCells(); selection.Draw(); }
@@ -309,9 +337,9 @@ function Editor(areaW, areaH){
 	this.Export = function(){
 		var cs = this.cellSize;
 		var level = [
-			[cs, 0, this.areaW, this.areaH],
+			[cs, this.spacing, this.areaW, this.areaH, this.margin],
 			this.tiles.map(function(layer){
-				return layer.map(function(t){ return [t[4], t[0] / cs, t[1] / cs]; });
+				return layer.map(function(t){ return t[5] ? [t[4], t[0] / cs, t[1] / cs, t[5]] : [t[4], t[0] / cs, t[1] / cs]; });
 			}),
 			this.blocks.map(function(b){ return [b[0] / cs, b[1] / cs]; }),
 			this.objects.map(function(o){ return [o[0] / cs, o[1] / cs, String(o[2])]; }),
@@ -350,7 +378,8 @@ function Editor(areaW, areaH){
 		}
 		var settings = level[0];
 		this.cellSize = settings[0];
-		this.spacing = 0;
+		this.spacing = settings[1] || 0;
+		this.margin = settings[4] || 0;
 		this.areaW = settings[2];
 		this.areaH = settings[3];
 		this.tiles = [];
@@ -364,15 +393,13 @@ function Editor(areaW, areaH){
 		this.ResizeCanvas();
 
 		var cs = this.cellSize;
-		var cellsX = selection && selection.image ? Math.ceil(selection.image.width / cs) : 1;
 		var layers = level[1] || [];
 		for (var j = 0; j < layers.length; j++) {
 			var layer = [];
 			for (var i = 0; i < layers[j].length; i++) {
 				var t = layers[j][i];
-				var cy = Math.floor(t[0] / cellsX);
-				var cx = t[0] - cy * cellsX;
-				layer.push([t[1] * cs, t[2] * cs, cx * cs, cy * cs, t[0]]);
+				var src = this.srcFor(t[0]);
+				layer.push([t[1] * cs, t[2] * cs, src[0], src[1], t[0], t[3] || 0]);
 			}
 			this.tiles.push(layer);
 		}
@@ -411,23 +438,27 @@ function Editor(areaW, areaH){
 	}
 
 	// Positions stay on the same grid cell. The tileset region a tile pointed
-	// at is snapped to the new grid, so the index stays consistent with what
-	// LoadMap will compute from it later.
-	this.setTileSize = function(size){
-		if (size === this.cellSize) return;
+	// at is snapped to the cell of the new sheet grid that holds its center,
+	// so the index stays consistent with what LoadMap computes from it.
+	this.setTileGeometry = function(size, spacing, margin){
+		spacing = spacing || 0;
+		margin = margin || 0;
+		if (size === this.cellSize && spacing === this.spacing && margin === this.margin) return;
 		this.saveState();
-		var old = this.cellSize;
-		var imgW = selection && selection.image ? selection.image.width : size;
-		var cellsX = Math.max(1, Math.ceil(imgW / size));
+		var old = this.cellSize, oldHalf = old / 2;
+		this.cellSize = size;
+		this.spacing = spacing;
+		this.margin = margin;
+		var step = this.sheetStep(), cols = this.sheetCols(), rows = this.sheetRows();
 		var snap = function(t){
 			var gx = Math.round(t[0] / old), gy = Math.round(t[1] / old);
-			var cx = Math.floor(t[2] / size), cy = Math.floor(t[3] / size);
-			return [gx * size, gy * size, cx * size, cy * size, cy * cellsX + cx];
+			var cx = Math.max(0, Math.min(cols - 1, Math.floor((t[2] + oldHalf - margin) / step)));
+			var cy = Math.max(0, Math.min(rows - 1, Math.floor((t[3] + oldHalf - margin) / step)));
+			return [gx * size, gy * size, margin + cx * step, margin + cy * step, cy * cols + cx, t[5] || 0];
 		};
 		for (var l = 0; l < this.tiles.length; l++) this.tiles[l] = this.tiles[l].map(snap);
 		this.blocks = this.blocks.map(function(b){ return [Math.round(b[0] / old) * size, Math.round(b[1] / old) * size, size, size]; });
 		this.objects = this.objects.map(function(o){ return [Math.round(o[0] / old) * size, Math.round(o[1] / old) * size, o[2]]; });
-		this.cellSize = size;
 		this.ResizeCanvas();
 		if (selection) {
 			selection.selected = null;
@@ -436,6 +467,8 @@ function Editor(areaW, areaH){
 		}
 		this.Draw();
 	}
+
+	this.setTileSize = function(size){ this.setTileGeometry(size, this.spacing, this.margin); }
 
 	this.setTileset = function(url, done){
 		if (!url) return;
@@ -460,6 +493,24 @@ function Editor(areaW, areaH){
 		}
 	}
 
+	// Runs `act` on every cell between the last stroke cell and (gx, gy), so a
+	// fast drag leaves a line rather than dots. mouseX/Y are borrowed for each
+	// step since the tools read the cell from them.
+	this.strokeTo = function(gx, gy, act){
+		var from = this.lastStrokeCell || [gx, gy];
+		var dx = gx - from[0], dy = gy - from[1], n = Math.max(Math.abs(dx), Math.abs(dy));
+		var realX = this.mouseX, realY = this.mouseY, cs = this.cellSize;
+		if (n === 0) { act(); }
+		for (var i = 1; i <= n; i++) {
+			this.mouseX = Math.round(from[0] + dx * i / n) * cs + 1;
+			this.mouseY = Math.round(from[1] + dy * i / n) * cs + 1;
+			act();
+		}
+		this.mouseX = realX;
+		this.mouseY = realY;
+		this.lastStrokeCell = [gx, gy];
+	}
+
 	this.cellUnderMouse = function(){
 		return [Math.floor(this.mouseX / this.cellSize) * this.cellSize,
 			Math.floor(this.mouseY / this.cellSize) * this.cellSize];
@@ -482,6 +533,9 @@ function Editor(areaW, areaH){
 	this.clipboard = null;
 	this.clipboardActive = false;
 	this.selRect = null;
+	// Flip bits applied to whatever the brush is; mirroring a block also
+	// mirrors its arrangement, so a 2x2 house comes out as its mirror image.
+	this.brushFlip = 0;
 
 	this.hasBrush = function(){
 		if (this.clipboardActive && this.clipboard) return true;
@@ -492,9 +546,14 @@ function Editor(areaW, areaH){
 		return [selection ? selection.stampW || 1 : 1, selection ? selection.stampH || 1 : 1];
 	}
 	this.brushTile = function(c, r){
-		if (this.clipboardActive && this.clipboard) return this.clipboard.cells[r][c];
-		return selection.tileFor(c, r);
+		var size = this.brushSize();
+		if (this.brushFlip & this.FLIP_H) c = size[0] - 1 - c;
+		if (this.brushFlip & this.FLIP_V) r = size[1] - 1 - r;
+		var t = (this.clipboardActive && this.clipboard) ? this.clipboard.cells[r][c] : selection.tileFor(c, r);
+		if (!t) return null;
+		return [t[0], t[1], t[2], (t[3] || 0) ^ this.brushFlip];
 	}
+	this.flipBrush = function(bit){ this.brushFlip ^= bit; }
 
 	// The brush repeated across the map, anchored at grid cell (ax, ay): what
 	// a fill or a line tool should put at (gx, gy). [sx, sy, index] or null.
@@ -535,7 +594,7 @@ function Editor(areaW, areaH){
 			var row = [];
 			for (var x = r.x0; x <= r.x1; x++) {
 				var t = this.tileAt(layer, x, y);
-				row.push(t ? [t[2], t[3], t[4]] : null);
+				row.push(t ? [t[2], t[3], t[4], t[5] || 0] : null);
 			}
 			cells.push(row);
 		}
@@ -603,15 +662,15 @@ function Editor(areaW, areaH){
 	// Puts one tile on a layer, replacing whatever is there. True if it changed.
 	this.putTile = function(layer, gx, gy, t){
 		if (!t) return false;
-		var px = gx * this.cellSize, py = gy * this.cellSize;
+		var px = gx * this.cellSize, py = gy * this.cellSize, flags = t[3] || 0;
 		for (var i = 0; i < layer.length; i++) {
 			if (layer[i][0] === px && layer[i][1] === py) {
-				if (layer[i][4] === t[2]) return false;
-				layer[i][2] = t[0]; layer[i][3] = t[1]; layer[i][4] = t[2];
+				if (layer[i][4] === t[2] && (layer[i][5] || 0) === flags) return false;
+				layer[i][2] = t[0]; layer[i][3] = t[1]; layer[i][4] = t[2]; layer[i][5] = flags;
 				return true;
 			}
 		}
-		layer.push([px, py, t[0], t[1], t[2]]);
+		layer.push([px, py, t[0], t[1], t[2], flags]);
 		return true;
 	}
 
@@ -637,7 +696,7 @@ function Editor(areaW, areaH){
 						var t = this.brushTile(c, r);
 						if (!t) continue;
 						var existing = this.tileAt(buffer, gx + c, gy + r);
-						if (!existing || existing[4] !== t[2]) pending.push([gx + c, gy + r, t]);
+						if (!existing || existing[4] !== t[2] || (existing[5] || 0) !== (t[3] || 0)) pending.push([gx + c, gy + r, t]);
 					}
 				}
 				if (pending.length === 0) return;
@@ -713,7 +772,7 @@ function Editor(areaW, areaH){
 		var target = start ? start[4] : null;
 		var size = this.brushSize();
 		var only = size[0] === 1 && size[1] === 1 ? this.brushTile(0, 0) : null;
-		if (only && target === only[2]) return;
+		if (only && target === only[2] && (start ? start[5] || 0 : 0) === (only[3] || 0)) return;
 		var self2 = this, region = [];
 		this.flood(layer, gridX, gridY,
 			function(tile){ return (tile ? tile[4] : null) === target; },
@@ -804,6 +863,20 @@ function Editor(areaW, areaH){
 		return true;
 	}
 
+	this.moveLayer = function(from, to){
+		if (to < 0 || to >= this.tiles.length || from === to) return false;
+		this.saveState();
+		var t = this.tiles.splice(from, 1)[0];
+		this.tiles.splice(to, 0, t);
+		var m = this.layerMeta.splice(from, 1)[0];
+		this.layerMeta.splice(to, 0, m);
+		if (this.layer === from) this.layer = to;
+		else if (from < this.layer && to >= this.layer) this.layer--;
+		else if (from > this.layer && to <= this.layer) this.layer++;
+		this.Draw();
+		return true;
+	}
+
 	this.clearLayer = function(index){
 		if (!this.tiles[index] || this.tiles[index].length === 0) return false;
 		this.saveState();
@@ -858,11 +931,20 @@ function Editor(areaW, areaH){
 		for (var li = 0; li < wanted.length; li++) {
 			var layer = this.tiles[wanted[li]];
 			if (!layer) continue;
-			for (var j = 0; j < layer.length; j++) {
-				tempCtx.drawImage(selection.image, layer[j][2], layer[j][3], cs, cs, layer[j][0], layer[j][1], cs, cs);
-			}
+			for (var j = 0; j < layer.length; j++) this.drawTile(tempCtx, layer[j], cs);
 		}
 		return tempCanvas;
+	}
+
+	// Draws one tile, mirrored per its flags. Unflipped tiles take the plain
+	// path since save/restore per tile would cost on a big map.
+	this.drawTile = function(ctx, t, cs){
+		if (!t[5]) { ctx.drawImage(selection.image, t[2], t[3], cs, cs, t[0], t[1], cs, cs); return; }
+		ctx.save();
+		ctx.translate(t[0] + ((t[5] & 1) ? cs : 0), t[1] + ((t[5] & 2) ? cs : 0));
+		ctx.scale((t[5] & 1) ? -1 : 1, (t[5] & 2) ? -1 : 1);
+		ctx.drawImage(selection.image, t[2], t[3], cs, cs, 0, 0, cs, cs);
+		ctx.restore();
 	}
 
 	this.Draw = function(){
@@ -877,9 +959,7 @@ function Editor(areaW, areaH){
 				if (!layer || !this.isLayerVisible(i)) continue;
 				if (this.drawLayer && i !== this.layer) continue;
 				this.ctx.globalAlpha = (i === this.layer || !this.showLayerTransparency || this.drawLayer) ? 1.0 : 0.3;
-				for (var j = 0; j < layer.length; j++) {
-					this.ctx.drawImage(selection.image, layer[j][2], layer[j][3], cs, cs, layer[j][0], layer[j][1], cs, cs);
-				}
+				for (var j = 0; j < layer.length; j++) this.drawTile(this.ctx, layer[j], cs);
 			}
 			this.ctx.globalAlpha = 1.0;
 		}
@@ -944,6 +1024,10 @@ function Editor(areaW, areaH){
 		}
 	});
 
+	// The map canvas sits inside the scroll box, so one listener there covers
+	// drawing and two-finger panning without handling a touch twice.
+	attachTouch(this.div, true);
+
 	var tilemap = this.tilesetUrl() || 'res/tileset.png';
 	if (window.updateLoadingText) window.updateLoadingText('Loading Tileset', 'Preparing tile palette...');
 	this.loadTilesetImage(tilemap, function(){
@@ -975,8 +1059,8 @@ function SelectionFrame(image){
 
 	this.updateCells = function() {
 		this.cellSize = editor.cellSize;
-		this.cellsX = Math.max(1, Math.ceil(this.image.width / this.cellSize));
-		this.cellsY = Math.max(1, Math.ceil(this.image.height / this.cellSize));
+		this.cellsX = editor.sheetCols();
+		this.cellsY = editor.sheetRows();
 		this.canvas.width = this.image.width;
 		this.canvas.height = this.image.height;
 		this.setScale(this.scale);
@@ -1006,8 +1090,11 @@ function SelectionFrame(image){
 		this.stampW = r - l + 1;
 		this.stampH = b - t + 1;
 		this.selected = t * this.cellsX + l;
-		this.selectedX = l * cs;
-		this.selectedY = t * cs;
+		this.selectedCol = l;
+		this.selectedRow = t;
+		var src = editor.srcFor(this.selected);
+		this.selectedX = src[0];
+		this.selectedY = src[1];
 		if (editor) editor.clipboardActive = false;
 		this.Draw();
 		if (window.onTileSelected) window.onTileSelected(this.selected);
@@ -1015,16 +1102,16 @@ function SelectionFrame(image){
 
 	// Tile (c, r) cells into the picked block: [srcX, srcY, index].
 	this.tileFor = function(c, r){
-		var cs = editor.cellSize;
-		var col = this.selectedX / cs + c, row = this.selectedY / cs + r;
-		return [col * cs, row * cs, row * this.cellsX + col];
+		var col = this.selectedCol + c, row = this.selectedRow + r;
+		var src = editor.srcFor(row * this.cellsX + col);
+		return [src[0], src[1], row * this.cellsX + col];
 	}
 
 	// Palette cell under the mouse; clamped to the sheet while dragging so a
 	// drag past the edge still ends on the last tile.
 	this.cellAt = function(clamp){
-		var cs = editor.cellSize;
-		var px = Math.floor(this.mouseX / cs), py = Math.floor(this.mouseY / cs);
+		var step = editor.sheetStep(), m = editor.margin;
+		var px = Math.floor((this.mouseX - m) / step), py = Math.floor((this.mouseY - m) / step);
 		if (clamp) return [Math.max(0, Math.min(this.cellsX - 1, px)), Math.max(0, Math.min(this.cellsY - 1, py))];
 		if (px < 0 || py < 0 || px >= this.cellsX || py >= this.cellsY) return null;
 		return [px, py];
@@ -1053,23 +1140,18 @@ function SelectionFrame(image){
 
 		this.ctx.strokeStyle = "rgba(0,0,0,0.3)";
 		this.ctx.lineWidth = 1;
-		this.ctx.beginPath();
-		// The last line sits inside the edge, so the outer cells get a border too.
-		var w = this.image.width, h = this.image.height;
-		for (var x = 0; x <= w; x += cs) {
-			var lx = Math.min(x, w) - 0.5;
-			this.ctx.moveTo(x === 0 ? 0.5 : lx, 0);
-			this.ctx.lineTo(x === 0 ? 0.5 : lx, h);
+		var step = editor.sheetStep(), m = editor.margin;
+		// One outline per cell rather than a line grid: with spacing the cells
+		// do not touch, and the outline sits inside the cell so the outer
+		// cells get a border too.
+		for (var r = 0; r < this.cellsY; r++) {
+			for (var c = 0; c < this.cellsX; c++) {
+				this.ctx.strokeRect(m + c * step + 0.5, m + r * step + 0.5, cs - 1, cs - 1);
+			}
 		}
-		for (var y = 0; y <= h; y += cs) {
-			var ly = Math.min(y, h) - 0.5;
-			this.ctx.moveTo(0, y === 0 ? 0.5 : ly);
-			this.ctx.lineTo(w, y === 0 ? 0.5 : ly);
-		}
-		this.ctx.stroke();
 
 		if (this.selected != null) {
-			var sw = this.stampW * cs, sh = this.stampH * cs;
+			var sw = this.stampW * step - editor.spacing, sh = this.stampH * step - editor.spacing;
 			this.ctx.strokeStyle = "#ff0";
 			this.ctx.lineWidth = 3;
 			this.ctx.strokeRect(this.selectedX + 1, this.selectedY + 1, sw - 2, sh - 2);
@@ -1083,6 +1165,7 @@ function SelectionFrame(image){
 
 	this.updateCells();
 	this.Draw();
+	attachTouch(this.canvas, false);
 }
 
 window.addEventListener("mousemove", function(s) {
@@ -1099,18 +1182,19 @@ window.addEventListener("mousemove", function(s) {
 	editor.mouseX = Math.floor((s.clientX - canvasRect.left) / editor.zoom);
 	editor.mouseY = Math.floor((s.clientY - canvasRect.top) / editor.zoom);
 
+	var gx = Math.floor(editor.mouseX / editor.cellSize), gy = Math.floor(editor.mouseY / editor.cellSize);
 	if (editor.mouseLeft) {
 		if (editor.toolType === 'pencil') {
-			if (editor.hasBrush()) editor.placeBlock();
+			if (editor.hasBrush()) editor.strokeTo(gx, gy, function(){ editor.placeBlock(); });
 		} else if (editor.toolType === 'select') {
 			editor.dragSelect();
 		} else if (editor.toolType === 'collision') {
-			editor.placeBlock();
+			editor.strokeTo(gx, gy, function(){ editor.placeBlock(); });
 		} else if (editor.toolType === 'eraser') {
-			editor.removeBlock();
+			editor.strokeTo(gx, gy, function(){ editor.removeBlock(); });
 		}
 	} else if (editor.mouseRight) {
-		if (editor.toolType !== 'rect' && editor.toolType !== 'select') editor.removeBlock();
+		if (editor.toolType !== 'rect' && editor.toolType !== 'select') editor.strokeTo(gx, gy, function(){ editor.removeBlock(); });
 	}
 
 	if (selection && selection.canvas) {
@@ -1132,6 +1216,70 @@ window.addEventListener("mouseup", function(e) {
 	if (e.button === 2) editor.mouseRight = false;
 	editor.strokeOpen = false;
 }, false);
+
+// Touch: one finger is the left mouse button, replayed through the same
+// mouse listeners as synthetic events so every tool behaves the same; two
+// fingers pan the map and pinch to zoom. Attached to the map and, once the
+// palette exists, to the palette canvas.
+function attachTouch(target, onTwoFinger) {
+	if (!target || target._touchAttached) return;
+	target._touchAttached = true;
+	var pinch = null;
+	var synth = function(type, touch, to) {
+		(to || window).dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, clientX: touch.clientX, clientY: touch.clientY, button: 0, buttons: type === 'mouseup' ? 0 : 1 }));
+	};
+	var centroid = function(touches) {
+		return { x: (touches[0].clientX + touches[1].clientX) / 2, y: (touches[0].clientY + touches[1].clientY) / 2,
+			d: Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY) };
+	};
+	// Fingers land one at a time, so a single touch waits a beat before it
+	// becomes a press: if a second finger arrives it was a pinch, not a stroke.
+	var pending = null;
+	var press = function() {
+		if (!pending) return;
+		clearTimeout(pending.timer);
+		var t = pending.touch, el = pending.target;
+		pending = null;
+		synth('mousemove', t);
+		synth('mousedown', t, el);
+	};
+	target.addEventListener('touchstart', function(e) {
+		e.preventDefault();
+		if (e.touches.length >= 2 && onTwoFinger) {
+			if (pending) { clearTimeout(pending.timer); pending = null; }
+			else if (pinch === null) synth('mouseup', e.touches[0]);   // a stroke already under way ends here
+			pinch = centroid(e.touches);
+			pinch.zoom = editor.zoom;
+			return;
+		}
+		if (e.touches.length === 1 && !pinch) {
+			var touch = e.touches[0], el = e.target;
+			pending = { touch: touch, target: el, timer: setTimeout(press, 80) };
+		}
+	}, { passive: false });
+	target.addEventListener('touchmove', function(e) {
+		e.preventDefault();
+		if (pending) press();
+		if (pinch && e.touches.length >= 2) {
+			var c = centroid(e.touches);
+			editor.setZoom(pinch.zoom * (c.d / pinch.d), c.x, c.y);
+			editor.div.scrollLeft -= (c.x - pinch.x);
+			editor.div.scrollTop -= (c.y - pinch.y);
+			pinch.x = c.x; pinch.y = c.y;
+			return;
+		}
+		if (e.touches.length === 1) synth('mousemove', e.touches[0]);
+	}, { passive: false });
+	var end = function(e) {
+		e.preventDefault();
+		if (pinch) { if (e.touches.length < 2) pinch = null; return; }
+		if (pending) press();   // a quick tap still counts
+		var t = e.changedTouches[0];
+		if (t) synth('mouseup', t);
+	};
+	target.addEventListener('touchend', end, { passive: false });
+	target.addEventListener('touchcancel', end, { passive: false });
+}
 
 // Platform integration: the saved project is the level text plus the tileset URL.
 window.serializeProjectData = function() {
