@@ -818,10 +818,11 @@ function Editor(areaW, areaH){
 
 	// The map with no grid and every layer at full opacity, for previews.
 	this.exportScreenshot = function() {
-		var grid = this.drawGrid, transparency = this.showLayerTransparency, only = this.drawLayer;
+		var grid = this.drawGrid, transparency = this.showLayerTransparency, only = this.drawLayer, blocks = this.drawBlocks;
 		this.drawGrid = false;
 		this.showLayerTransparency = false;
 		this.drawLayer = false;
+		this.drawBlocks = false;
 		this.Draw();
 		var tempCanvas = document.createElement('canvas');
 		tempCanvas.width = this.areaW * this.cellSize;
@@ -830,6 +831,7 @@ function Editor(areaW, areaH){
 		this.drawGrid = grid;
 		this.showLayerTransparency = transparency;
 		this.drawLayer = only;
+		this.drawBlocks = blocks;
 		this.Draw();
 		return tempCanvas;
 	}
