@@ -1,74 +1,77 @@
 # Tilemap Editor
 
-A browser-based tile map editor for building game levels. Built with vanilla JavaScript and HTML5 Canvas.
+A browser-based tile map editor for building game levels. Vanilla JavaScript and HTML5 Canvas, no build step.
 
 ## Features
 
-- **Multi-layer editing** — Background, middle, foreground, and custom layers (up to 10)
-- **Drawing tools** — Pencil, eraser, flood fill, fill erase, row fill, column fill
-- **Custom tilesets** — Load any tileset image via URL
-- **Zoom & pan** — Mouse wheel zoom (25%–400%), middle-click panning
-- **Undo/redo** — Full history with Ctrl+Z / Ctrl+Y
-- **Collision & object layers** — Place collision blocks and named objects
-- **Grid toggle** — Show/hide grid, layer transparency controls
-- **Export** — Save map data as structured level arrays, export layers as PNG
-- **Keyboard shortcuts** — Tool selection (P/E/F/X/R/C), layer switching (1–9)
+- **Layers**: background, middle, foreground and up to 10 in all, with the other layers faded while you draw
+- **Tools**: pencil, eraser, fill, fill erase, row fill, column fill. Fill replaces a connected run of the same tile, or floods an empty area
+- **Custom tilesets**: paste an image URL or choose an image file; the palette zooms so small tiles stay pickable
+- **Map and tile size** changes keep every tile on its grid cell
+- **Zoom and pan**: wheel zooms toward the pointer (25% to 400%), Space+drag or middle-drag pans
+- **Undo and redo** across drawing, layer changes, resizes and tileset swaps
+- **Hover preview**: a ghost of the picked tile shows where it will land
+- **Export**: the project as a JSON file, or any set of layers as a transparent PNG
 
 ## Getting Started
 
-Open `index.html` in a browser. The editor loads with a default 50x30 tile grid and a basic tileset.
+Open `index.html` in a browser. The editor starts with a 50 x 30 grid of 16 px tiles and a three-tile sample tileset.
 
 ### Loading a Custom Tileset
 
-1. Go to **File > Change Tileset**
-2. Enter the URL of your tileset PNG
-3. Click **Apply**
+1. File, then **Change Tileset...**
+2. Paste the URL of a tileset PNG, or click **Choose an image...**
+3. Set the tile size under Edit, then **Tile Size...** to match the image
 
-The tileset appears in the right sidebar. Click tiles to select them, then draw on the canvas.
+Click a tile in the palette on the right, then draw on the map.
 
-### Map Data Format
+### Project Files
 
-Maps are stored as JavaScript arrays:
+**Save** (Ctrl+S) downloads `tilemap-project.json`; **Open Project File...** loads one back. The file holds the
+tileset URL and the level text:
 
 ```js
-var levels = [[[cellSize, 0, width, height], [tiles...], [collisions...], [objects...]]];
+levels[1] = [[cellSize, 0, width, height], [layer, layer, ...], [collisions], [objects]];
 ```
 
-Each tile entry is `[tileIndex, gridX, gridY]`.
+Each layer is a list of `[tileIndex, gridX, gridY]`. Tile indexes count across the tileset image left to right, top to
+bottom, at the current tile size.
 
 ## Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
-| P | Pencil tool |
-| E | Eraser tool |
-| F | Flood fill |
-| X | Fill erase |
-| R | Row fill |
-| C | Column fill |
-| 1–9 | Switch layer |
-| Ctrl+Z | Undo |
-| Ctrl+Y | Redo |
+| P, E, F, X, R, C | Pencil, Eraser, Fill, Fill Erase, Row Fill, Column Fill |
+| 1 to 9 | Switch layer |
+| G | Show or hide the grid |
+| + / - / 0 | Zoom in, zoom out, reset to 100% |
+| Space + drag | Pan |
+| Ctrl+Z / Ctrl+Y | Undo / Redo |
 | Ctrl+S | Save |
-| Mouse wheel | Zoom in/out |
-| Middle click + drag | Pan |
-| Right click | Quick erase |
+| Esc | Close menus and dialogs |
+| Right click | Erase |
+
+## Embedding
+
+The page is self-contained. A host that stores projects itself can listen for three cancelable events on `window`
+and call `preventDefault()` to take them over:
+
+- `tilemapeditor:save` with `detail.data`, the project JSON string
+- `tilemapeditor:exportImage` with `detail.dataUrl` and `detail.filename`
+- `tilemapeditor:pickTileset`, after which the host calls `applyTilesetUrl(url)`
+
+`window.serializeProjectData()` and `window.loadProjectData(json)` round-trip the whole project.
 
 ## Project Structure
 
 ```
-├── index.html       # Main application (UI, CSS, menu system)
-├── js/
-│   ├── main.js      # Core editor engine (canvas, tools, save/load)
-│   ├── inputs.js    # Mouse and keyboard input handling
-│   ├── resources.js # Image and audio resource loader
-│   └── utils.js     # Utility functions
-├── res/
-│   ├── tileset.png  # Default tileset
-│   └── logo.png     # App logo
-└── icon.svg         # App icon
+index.html       # UI, styles, menus, dialogs, status bar
+js/main.js       # Editor engine: canvas, tools, history, save format
+js/utils.js      # Startup
+res/tileset.png  # Sample tileset
+icon.svg         # App icon
 ```
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 — see the [LICENSE](LICENSE) file for details.
+GNU General Public License v3.0, see [LICENSE](LICENSE).
