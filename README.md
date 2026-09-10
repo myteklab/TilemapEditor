@@ -5,7 +5,8 @@ A browser-based tile map editor for building game levels. Vanilla JavaScript and
 ## Features
 
 - **Layers**: background, middle, foreground and up to 10 in all, with the other layers faded while you draw
-- **Tools**: pencil, eraser, fill, fill erase, row fill, column fill. Fill replaces a connected run of the same tile, or floods an empty area
+- **Tools**: pencil, eraser, fill, fill erase, row fill, column fill, box fill, select, solid. Fill replaces a connected run of the same tile, or floods an empty area
+- **Copy and paste**: select a region, Ctrl+C or Ctrl+X, then Ctrl+V makes it the brush
 - **Custom tilesets**: paste an image URL or choose an image file; the palette zooms so small tiles stay pickable
 - **Map and tile size** changes keep every tile on its grid cell
 - **Zoom and pan**: wheel zooms toward the pointer (25% to 400%), Space+drag or middle-drag pans
@@ -45,7 +46,9 @@ bottom, at the current tile size.
 |-----|--------|
 | P, E, F, X, R, C | Pencil, Eraser, Fill, Fill Erase, Row Fill, Column Fill |
 | 1 to 9 | Switch layer |
-| S | Solid |
+| B, M, S | Box fill, Select, Solid |
+| Ctrl+C / X / V | Copy or cut the selection, paste it as the brush |
+| Delete, Ctrl+A | Clear the selection, select all |
 | G | Show or hide the grid |
 | H | Hide or show the current layer |
 | + / - / 0 | Zoom in, zoom out, reset to 100% |

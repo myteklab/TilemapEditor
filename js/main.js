@@ -119,7 +119,7 @@ function Editor(areaW, areaH){
 		if (e.button === 0) {
 			self.mouseLeft = true;
 			self.strokeOpen = false;
-			var hasTile = selection && selection.selected != null;
+			var hasTile = self.hasBrush();
 			switch (self.toolType) {
 				case 'fill': if (hasTile) self.floodFill(self.mouseX, self.mouseY); break;
 				case 'fillErase': self.floodFillErase(self.mouseX, self.mouseY); break;
@@ -127,13 +127,16 @@ function Editor(areaW, areaH){
 				case 'columnFill': if (hasTile) self.fillColumn(self.mouseX, self.mouseY); break;
 				case 'eraser': self.removeBlock(); break;
 				case 'collision': self.placeBlock(); break;
-				default: if (hasTile) self.placeBlock();
+				case 'select': self.beginSelect(); break;
+				case 'rect': self.rectStart = self.clampedCell(); self.rectErase = false; break;
+				default: if (self.hasBrush()) self.placeBlock();
 			}
 		}
 		else if (e.button === 2) {
 			self.mouseRight = true;
 			self.strokeOpen = false;
-			self.removeBlock();
+			if (self.toolType === 'rect') { self.rectStart = self.clampedCell(); self.rectErase = true; }
+			else if (self.toolType !== 'select') self.removeBlock();
 		}
 	});
 
@@ -473,16 +476,133 @@ function Editor(areaW, areaH){
 		}
 	}
 
-	// The picked block repeated across the map, anchored at grid cell (ax, ay):
-	// what a fill or a line tool should put at (gx, gy). Returns [sx, sy, index].
-	this.stampTile = function(gx, gy, ax, ay){
-		var w = selection.stampW || 1, h = selection.stampH || 1;
-		var c = ((gx - ax) % w + w) % w, r = ((gy - ay) % h + h) % h;
+	// The brush is the block picked in the palette, or after Ctrl+V the
+	// copied region: a w x h grid where a cell may be null (leave the map as
+	// it is there). Everything that paints goes through these two.
+	this.clipboard = null;
+	this.clipboardActive = false;
+	this.selRect = null;
+
+	this.hasBrush = function(){
+		if (this.clipboardActive && this.clipboard) return true;
+		return !!(selection && selection.selected != null);
+	}
+	this.brushSize = function(){
+		if (this.clipboardActive && this.clipboard) return [this.clipboard.w, this.clipboard.h];
+		return [selection ? selection.stampW || 1 : 1, selection ? selection.stampH || 1 : 1];
+	}
+	this.brushTile = function(c, r){
+		if (this.clipboardActive && this.clipboard) return this.clipboard.cells[r][c];
 		return selection.tileFor(c, r);
+	}
+
+	// The brush repeated across the map, anchored at grid cell (ax, ay): what
+	// a fill or a line tool should put at (gx, gy). [sx, sy, index] or null.
+	this.stampTile = function(gx, gy, ax, ay){
+		var size = this.brushSize(), w = size[0], h = size[1];
+		var c = ((gx - ax) % w + w) % w, r = ((gy - ay) % h + h) % h;
+		return this.brushTile(c, r);
+	}
+
+	this.clampedCell = function(){
+		var cs = this.cellSize;
+		return [Math.max(0, Math.min(this.areaW - 1, Math.floor(this.mouseX / cs))),
+			Math.max(0, Math.min(this.areaH - 1, Math.floor(this.mouseY / cs)))];
+	}
+
+	// ---- Select tool, clipboard ----
+	this.beginSelect = function(){
+		var c = this.clampedCell();
+		this.selStart = c;
+		this.selRect = { x0: c[0], y0: c[1], x1: c[0], y1: c[1] };
+	}
+	this.dragSelect = function(){
+		if (!this.selStart) return;
+		var c = this.clampedCell(), s = this.selStart;
+		this.selRect = { x0: Math.min(s[0], c[0]), y0: Math.min(s[1], c[1]), x1: Math.max(s[0], c[0]), y1: Math.max(s[1], c[1]) };
+	}
+	this.selectAll = function(){
+		this.selRect = { x0: 0, y0: 0, x1: this.areaW - 1, y1: this.areaH - 1 };
+	}
+	this.clearSelection = function(){
+		this.selRect = null;
+		this.selStart = null;
+	}
+	this.copySelection = function(){
+		if (!this.selRect) return null;
+		var r = this.selRect, layer = this.currentBuffer(), cells = [];
+		for (var y = r.y0; y <= r.y1; y++) {
+			var row = [];
+			for (var x = r.x0; x <= r.x1; x++) {
+				var t = this.tileAt(layer, x, y);
+				row.push(t ? [t[2], t[3], t[4]] : null);
+			}
+			cells.push(row);
+		}
+		this.clipboard = { w: r.x1 - r.x0 + 1, h: r.y1 - r.y0 + 1, cells: cells };
+		return this.clipboard;
+	}
+	this.deleteSelection = function(){
+		if (!this.selRect) return false;
+		var r = this.selRect, cs = this.cellSize, layer = this.currentBuffer();
+		var keep = layer.filter(function(t){
+			var gx = t[0] / cs, gy = t[1] / cs;
+			return gx < r.x0 || gx > r.x1 || gy < r.y0 || gy > r.y1;
+		});
+		if (keep.length === layer.length) return false;
+		this.saveState();
+		this.tiles[this.layer] = keep;
+		this.Draw();
+		return true;
+	}
+	this.cutSelection = function(){
+		if (!this.copySelection()) return false;
+		this.deleteSelection();
+		return true;
+	}
+	// The copied region becomes the brush; the next click stamps it.
+	this.pasteClipboard = function(){
+		if (!this.clipboard) return false;
+		this.clipboardActive = true;
+		return true;
+	}
+
+	// ---- Rect tool ----
+	this.rectStart = null;
+	this.rectErase = false;
+	this.currentRect = function(){
+		if (!this.rectStart) return null;
+		var c = this.clampedCell(), s = this.rectStart;
+		return { x0: Math.min(s[0], c[0]), y0: Math.min(s[1], c[1]), x1: Math.max(s[0], c[0]), y1: Math.max(s[1], c[1]) };
+	}
+	this.finishRect = function(){
+		var r = this.currentRect();
+		if (!r) return;
+		var anchor = this.rectStart;
+		this.rectStart = null;
+		if (this.mode !== 0) return;
+		var layer = this.currentBuffer(), cs = this.cellSize;
+		if (this.rectErase) {
+			var keep = layer.filter(function(t){
+				var gx = t[0] / cs, gy = t[1] / cs;
+				return gx < r.x0 || gx > r.x1 || gy < r.y0 || gy > r.y1;
+			});
+			if (keep.length === layer.length) return;
+			this.saveState();
+			this.tiles[this.layer] = keep;
+			this.Draw();
+			return;
+		}
+		if (!this.hasBrush()) return;
+		var cells = [];
+		for (var y = r.y0; y <= r.y1; y++) for (var x = r.x0; x <= r.x1; x++) cells.push([x, y]);
+		this.saveState();
+		this.fillCells(cells, r.x0, r.y0);
 	}
 
 	// Puts one tile on a layer, replacing whatever is there. True if it changed.
 	this.putTile = function(layer, gx, gy, t){
+		if (!t) return false;
 		var px = gx * this.cellSize, py = gy * this.cellSize;
 		for (var i = 0; i < layer.length; i++) {
 			if (layer[i][0] === px && layer[i][1] === py) {
@@ -505,16 +625,17 @@ function Editor(areaW, areaH){
 		}
 		switch (this.mode) {
 			case 0:
-				if (!selection || selection.selected == null) return;
+				if (!this.hasBrush()) return;
 				var gx = px / this.cellSize, gy = py / this.cellSize;
-				var w = selection.stampW || 1, h = selection.stampH || 1;
+				var size = this.brushSize(), w = size[0], h = size[1];
 				// Find what would change before opening the undo step, so a
 				// drag over already-painted cells stays free.
 				var pending = [];
 				for (var r = 0; r < h; r++) {
 					for (var c = 0; c < w; c++) {
 						if (gx + c >= this.areaW || gy + r >= this.areaH) continue;
-						var t = selection.tileFor(c, r);
+						var t = this.brushTile(c, r);
+						if (!t) continue;
 						var existing = this.tileAt(buffer, gx + c, gy + r);
 						if (!existing || existing[4] !== t[2]) pending.push([gx + c, gy + r, t]);
 					}
@@ -583,15 +704,16 @@ function Editor(areaW, areaH){
 	// Fills the connected region under the click: empty cells if you click on
 	// empty, otherwise every connected tile of the same kind gets replaced.
 	this.floodFill = function(startX, startY) {
-		if (this.mode !== 0 || !selection || selection.selected == null) return;
+		if (this.mode !== 0 || !this.hasBrush()) return;
 		var layer = this.currentBuffer();
 		var cs = this.cellSize;
 		var gridX = Math.floor(startX / cs), gridY = Math.floor(startY / cs);
 		if (gridX < 0 || gridY < 0 || gridX >= this.areaW || gridY >= this.areaH) return;
 		var start = this.tileAt(layer, gridX, gridY);
 		var target = start ? start[4] : null;
-		var single = (selection.stampW || 1) === 1 && (selection.stampH || 1) === 1;
-		if (single && target === selection.selected) return;
+		var size = this.brushSize();
+		var only = size[0] === 1 && size[1] === 1 ? this.brushTile(0, 0) : null;
+		if (only && target === only[2]) return;
 		var self2 = this, region = [];
 		this.flood(layer, gridX, gridY,
 			function(tile){ return (tile ? tile[4] : null) === target; },
@@ -635,7 +757,7 @@ function Editor(areaW, areaH){
 	}
 
 	this.fillRow = function(startX, startY) {
-		if (this.mode !== 0 || !selection || selection.selected == null) return;
+		if (this.mode !== 0 || !this.hasBrush()) return;
 		var cs = this.cellSize, gx = Math.floor(startX / cs), gy = Math.floor(startY / cs);
 		if (gy < 0 || gy >= this.areaH) return;
 		this.saveState();
@@ -645,7 +767,7 @@ function Editor(areaW, areaH){
 	}
 
 	this.fillColumn = function(startX, startY) {
-		if (this.mode !== 0 || !selection || selection.selected == null) return;
+		if (this.mode !== 0 || !this.hasBrush()) return;
 		var cs = this.cellSize, gx = Math.floor(startX / cs), gy = Math.floor(startY / cs);
 		if (gx < 0 || gx >= this.areaW) return;
 		this.saveState();
@@ -884,6 +1006,7 @@ function SelectionFrame(image){
 		this.selected = t * this.cellsX + l;
 		this.selectedX = l * cs;
 		this.selectedY = t * cs;
+		if (editor) editor.clipboardActive = false;
 		this.Draw();
 		if (window.onTileSelected) window.onTileSelected(this.selected);
 	}
@@ -976,14 +1099,16 @@ window.addEventListener("mousemove", function(s) {
 
 	if (editor.mouseLeft) {
 		if (editor.toolType === 'pencil') {
-			if (selection && selection.selected != null) editor.placeBlock();
+			if (editor.hasBrush()) editor.placeBlock();
+		} else if (editor.toolType === 'select') {
+			editor.dragSelect();
 		} else if (editor.toolType === 'collision') {
 			editor.placeBlock();
 		} else if (editor.toolType === 'eraser') {
 			editor.removeBlock();
 		}
 	} else if (editor.mouseRight) {
-		editor.removeBlock();
+		if (editor.toolType !== 'rect' && editor.toolType !== 'select') editor.removeBlock();
 	}
 
 	if (selection && selection.canvas) {
@@ -998,6 +1123,8 @@ window.addEventListener("mousemove", function(s) {
 window.addEventListener("mouseup", function(e) {
 	if (!window.editor) return;
 	if (editor.isPanning) editor.endPan();
+	if (editor.rectStart && (e.button === 0 || e.button === 2)) editor.finishRect();
+	if (e.button === 0) editor.selStart = null;
 	if (e.button === 0) editor.mouseLeft = false;
 	if (e.button === 0 && selection) selection.dragStart = null;
 	if (e.button === 2) editor.mouseRight = false;

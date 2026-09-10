@@ -485,15 +485,20 @@
         flex-direction: column;
         align-items: center;
         flex-shrink: 0;
-        gap: 15px;
+        gap: 10px;
         overflow-y: auto;
+        scrollbar-width: none;
+    }
+
+    .tool-panel::-webkit-scrollbar {
+        display: none;
     }
 
     .layer-indicator {
         background: #1a1d2a;
         border: 1px solid #3a3d4a;
         border-radius: 6px;
-        padding: 8px;
+        padding: 6px;
         width: 100%;
         text-align: center;
         cursor: pointer;
@@ -515,7 +520,7 @@
 
     .layer-number {
         color: var(--accent);
-        font-size: 24px;
+        font-size: 20px;
         font-weight: bold;
         line-height: 1;
     }
@@ -523,7 +528,7 @@
     .tool-selector-vertical {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 5px;
         width: 100%;
     }
 
@@ -544,20 +549,19 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 8px 4px;
+        padding: 5px 3px 4px;
         background: #2a2d3a;
         border: 1px solid #3a3d4a;
         border-radius: 6px;
         cursor: pointer;
         transition: background 0.15s, border-color 0.15s;
         width: 100%;
-        aspect-ratio: 1;
-        gap: 4px;
+        gap: 2px;
     }
 
     .tool-icon {
-        width: 24px;
-        height: 24px;
+        width: 21px;
+        height: 21px;
         color: #a0aec0;
     }
 
@@ -841,6 +845,10 @@
         <symbol id="i-solid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m3 10 7-7"/><path d="M3 17 17 3"/><path d="m6 21 15-15"/><path d="m13 21 8-8"/></symbol>
         <symbol id="i-gamepad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4"/><path d="M8 9v4"/><path d="M15 12h.01"/><path d="M18 10h.01"/><path d="M17.3 5H6.7a4 4 0 0 0-4 3.6l-.7 7.4a2.5 2.5 0 0 0 4.4 1.8L9 15h6l2.6 2.8a2.5 2.5 0 0 0 4.4-1.8l-.7-7.4a4 4 0 0 0-4-3.6z"/></symbol>
         <symbol id="i-library" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h4v16H4z"/><path d="M10 4h4v16h-4z"/><path d="m16 5 4-1 3 15-4 1z"/></symbol>
+        <symbol id="i-select" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h2"/><path d="M11 3h2"/><path d="M17 3h2"/><path d="M21 5v2"/><path d="M21 11v2"/><path d="M21 17v2"/><path d="M19 21h-2"/><path d="M13 21h-2"/><path d="M7 21H5"/><path d="M3 19v-2"/><path d="M3 13v-2"/><path d="M3 7V5"/></symbol>
+        <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1" fill="currentColor" stroke="none"/></symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+        <symbol id="i-cut" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9"/><path d="M14.5 14.5 20 20"/><path d="M8.1 8.1 12 12"/></symbol>
         <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></symbol>
         <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></symbol>
         <symbol id="i-crosshair" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></symbol>
@@ -878,6 +886,12 @@
             <div class="menu-dropdown" id="editMenu">
                 <div class="menu-option" id="undoItem" onclick="editor.undo()"><svg class="icon"><use href="#i-undo"/></svg><span class="label">Undo</span><span class="shortcut">Ctrl+Z</span></div>
                 <div class="menu-option" id="redoItem" onclick="editor.redo()"><svg class="icon"><use href="#i-redo"/></svg><span class="label">Redo</span><span class="shortcut">Ctrl+Y</span></div>
+                <div class="menu-divider"></div>
+                <div class="menu-option" id="cutItem" onclick="cutSelection()"><svg class="icon"><use href="#i-cut"/></svg><span class="label">Cut</span><span class="shortcut">Ctrl+X</span></div>
+                <div class="menu-option" id="copyItem" onclick="copySelection()"><svg class="icon"><use href="#i-copy"/></svg><span class="label">Copy</span><span class="shortcut">Ctrl+C</span></div>
+                <div class="menu-option" id="pasteItem" onclick="pasteClipboard()"><svg class="icon"><use href="#i-clipboard"/></svg><span class="label">Paste</span><span class="shortcut">Ctrl+V</span></div>
+                <div class="menu-option" id="deleteItem" onclick="deleteSelection()"><svg class="icon"><use href="#i-trash"/></svg><span class="label">Delete Selection</span><span class="shortcut">Del</span></div>
+                <div class="menu-option" onclick="selectAll()"><svg class="icon"><use href="#i-select"/></svg><span class="label">Select All</span><span class="shortcut">Ctrl+A</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-option" onclick="openModal('mapSizeModal')"><svg class="icon"><use href="#i-resize"/></svg><span class="label">Map Size...</span></div>
                 <div class="menu-option" onclick="openModal('tileSizeModal')"><svg class="icon"><use href="#i-tile"/></svg><span class="label">Tile Size...</span></div>
@@ -1024,6 +1038,8 @@
                     <li>Fill covers a connected empty area, or replaces a connected run of the same tile</li>
                     <li>Fill Erase removes a connected run of the same tile</li>
                     <li>Row Fill and Column Fill paint a whole line in one click</li>
+                    <li>Box fills a dragged rectangle with the picked tiles; right-drag clears one</li>
+                    <li>Select drags out a region: Ctrl+C or Ctrl+X takes it, Delete clears it, and Ctrl+V turns the copy into the brush so a click puts it down</li>
                     <li>Solid marks cells a game should treat as walls; right-click clears one. They are saved with the map and shown as a red film you can hide in View</li>
                 </ul>
 
@@ -1075,7 +1091,13 @@
                 <tr><td>X</td><td>Fill Erase</td></tr>
                 <tr><td>R</td><td>Row Fill</td></tr>
                 <tr><td>C</td><td>Column Fill</td></tr>
+                <tr><td>B</td><td>Box fill</td></tr>
+                <tr><td>M</td><td>Select</td></tr>
                 <tr><td>S</td><td>Solid</td></tr>
+                <tr><td>Ctrl+C / Ctrl+X</td><td>Copy or cut the selection on the current layer</td></tr>
+                <tr><td>Ctrl+V</td><td>Make the copy the brush</td></tr>
+                <tr><td>Delete</td><td>Clear the selection on the current layer</td></tr>
+                <tr><td>Ctrl+A</td><td>Select the whole map</td></tr>
                 <tr><td>1 to 9</td><td>Switch layer</td></tr>
                 <tr><td>G</td><td>Show or hide the grid</td></tr>
                 <tr><td>H</td><td>Hide or show the current layer</td></tr>
@@ -1160,6 +1182,20 @@
                     <div class="tool-button">
                         <svg class="tool-icon"><use href="#i-column"/></svg>
                         <span class="tool-name">Column Fill</span>
+                    </div>
+                </label>
+                <label class="tool-option" title="Box (B): drag to fill a rectangle, right-drag to clear one">
+                    <input type="radio" name="toolType" value="rect">
+                    <div class="tool-button">
+                        <svg class="tool-icon"><use href="#i-box"/></svg>
+                        <span class="tool-name">Box</span>
+                    </div>
+                </label>
+                <label class="tool-option" title="Select (M): drag a region to copy, cut or delete">
+                    <input type="radio" name="toolType" value="select">
+                    <div class="tool-button">
+                        <svg class="tool-icon"><use href="#i-select"/></svg>
+                        <span class="tool-name">Select</span>
                     </div>
                 </label>
                 <label class="tool-option" title="Solid (S): mark cells the player cannot walk through">
@@ -1334,12 +1370,32 @@ document.addEventListener('keydown', function(e) {
         saveProject();
         return;
     }
+    var tag = e.target.tagName;
+    var typing = tag === 'INPUT' || tag === 'TEXTAREA';
     if (e.key === 'Escape') {
         closeModal();
         closeMenus();
+        if (!typing && window.editor && (editor.selRect || editor.clipboardActive)) {
+            editor.clearSelection();
+            editor.clipboardActive = false;
+            drawHover(lastHoverCell);
+            updateStatus();
+            updateEditMenu();
+        }
         return;
     }
-    var tag = e.target.tagName;
+    if (!typing && window.editor && (e.ctrlKey || e.metaKey) && !e.altKey) {
+        var k = e.key.toLowerCase();
+        if (k === 'c') { e.preventDefault(); copySelection(); return; }
+        if (k === 'x') { e.preventDefault(); cutSelection(); return; }
+        if (k === 'v') { e.preventDefault(); pasteClipboard(); return; }
+        if (k === 'a') { e.preventDefault(); selectAll(); return; }
+    }
+    if (!typing && window.editor && (e.key === 'Delete' || e.key === 'Backspace') && editor.selRect) {
+        e.preventDefault();
+        deleteSelection();
+        return;
+    }
     if (tag === 'INPUT' || tag === 'TEXTAREA') {
         var modal = e.target.closest('.modal');
         if (e.key === 'Enter' && modal) {
@@ -1359,6 +1415,8 @@ document.addEventListener('keydown', function(e) {
         case 'r': selectTool('rowFill'); break;
         case 'c': selectTool('columnFill'); break;
         case 's': selectTool('collision'); break;
+        case 'b': selectTool('rect'); break;
+        case 'm': selectTool('select'); break;
         case 'g': toggleViewOption('grid'); break;
         case 'h': toggleCurrentLayerVisible(); break;
         case '+': case '=': editor.zoomIn(); break;
@@ -1547,7 +1605,63 @@ function updateEditMenu() {
     if (!window.editor) return;
     document.getElementById('undoItem').classList.toggle('disabled', editor.undoStack.length === 0);
     document.getElementById('redoItem').classList.toggle('disabled', editor.redoStack.length === 0);
+    var noSel = !editor.selRect;
+    document.getElementById('cutItem').classList.toggle('disabled', noSel);
+    document.getElementById('copyItem').classList.toggle('disabled', noSel);
+    document.getElementById('deleteItem').classList.toggle('disabled', noSel);
+    document.getElementById('pasteItem').classList.toggle('disabled', !editor.clipboard);
     updateLayerList();
+}
+
+// ---- Selection and clipboard ---------------------------------------------
+
+function selectionSize() {
+    var r = editor.selRect;
+    return r ? (r.x1 - r.x0 + 1) + ' x ' + (r.y1 - r.y0 + 1) : '';
+}
+
+function selectAll() {
+    if (!window.editor) return;
+    editor.selectAll();
+    selectTool('select');
+    afterSelectionChange();
+}
+
+function afterSelectionChange() {
+    drawHover(lastHoverCell);
+    updateStatus();
+    updateEditMenu();
+}
+
+function copySelection() {
+    if (!window.editor || !editor.selRect) { showToast('Drag over the map with the Select tool first.', 'info'); return; }
+    editor.copySelection();
+    showToast('Copied ' + selectionSize() + ' cells. Ctrl+V makes them the brush.', 'info');
+    updateEditMenu();
+}
+
+function cutSelection() {
+    if (!window.editor || !editor.selRect) { showToast('Drag over the map with the Select tool first.', 'info'); return; }
+    editor.cutSelection();
+    showToast('Cut ' + selectionSize() + ' cells. Ctrl+V makes them the brush.', 'info');
+    afterSelectionChange();
+}
+
+function deleteSelection() {
+    if (!window.editor || !editor.selRect) return;
+    if (!editor.deleteSelection()) { showToast('Nothing on this layer inside the selection.', 'info'); return; }
+    afterSelectionChange();
+}
+
+// Pasting hands the copied region to the pencil: the ghost shows it under
+// the pointer and a click stamps it. Picking a palette tile ends that.
+function pasteClipboard() {
+    if (!window.editor || !editor.clipboard) { showToast('Nothing copied yet.', 'info'); return; }
+    editor.pasteClipboard();
+    editor.clearSelection();
+    selectTool('pencil');
+    afterSelectionChange();
+    showToast('Click on the map to place the copied ' + editor.clipboard.w + ' x ' + editor.clipboard.h + ' cells.', 'info');
 }
 
 // ---- Palette -------------------------------------------------------------
@@ -1581,10 +1695,13 @@ function updateStatus() {
     document.getElementById('statusZoom').textContent = Math.round(editor.zoom * 100) + '%';
     document.getElementById('statusCell').textContent = lastHoverCell ? lastHoverCell[0] + ', ' + lastHoverCell[1] : '-';
     var picked = 'none';
-    if (window.selection && selection.selected != null) {
+    if (editor.clipboardActive && editor.clipboard) {
+        picked = 'copied ' + editor.clipboard.w + ' x ' + editor.clipboard.h;
+    } else if (window.selection && selection.selected != null) {
         picked = '#' + selection.selected;
         if (selection.stampW > 1 || selection.stampH > 1) picked += ' (' + selection.stampW + ' x ' + selection.stampH + ')';
     }
+    if (editor.selRect) picked += ', selected ' + selectionSize();
     document.getElementById('statusPicked').textContent = picked;
 }
 
@@ -1627,18 +1744,59 @@ function setupHoverOverlay() {
         drawHover(null);
         updateStatus();
     });
+    // A box or a selection ends on release; the outline should not wait
+    // for the next mouse move to catch up.
+    window.addEventListener('mouseup', function() {
+        drawHover(lastHoverCell);
+        updateStatus();
+        updateEditMenu();
+    });
 }
 
 // A ghost of the picked tile where the pencil would put it, a whole row or
 // column for the line tools, and a red frame for the erasers.
+function drawMarquee(r, color) {
+    var cs = editor.cellSize;
+    var thin = Math.max(1, Math.round(1 / editor.zoom));
+    hoverCtx.lineWidth = thin;
+    hoverCtx.setLineDash([4 * thin, 3 * thin]);
+    hoverCtx.strokeStyle = 'rgba(0,0,0,0.85)';
+    hoverCtx.strokeRect(r.x0 * cs + thin / 2, r.y0 * cs + thin / 2, (r.x1 - r.x0 + 1) * cs - thin, (r.y1 - r.y0 + 1) * cs - thin);
+    hoverCtx.lineDashOffset = 4 * thin;
+    hoverCtx.strokeStyle = color;
+    hoverCtx.strokeRect(r.x0 * cs + thin / 2, r.y0 * cs + thin / 2, (r.x1 - r.x0 + 1) * cs - thin, (r.y1 - r.y0 + 1) * cs - thin);
+    hoverCtx.setLineDash([]);
+    hoverCtx.lineDashOffset = 0;
+}
+
 function drawHover(cell) {
     if (!hoverCtx) return;
     hoverCtx.clearRect(0, 0, hoverCanvas.width, hoverCanvas.height);
-    if (!cell || !window.editor || editor.spacePan) return;
+    if (!window.editor) return;
+    if (editor.selRect) drawMarquee(editor.selRect, 'rgba(255,255,255,0.95)');
+    if (!cell || editor.spacePan) return;
     var cs = editor.cellSize;
     var tool = editor.toolType;
-    var erasing = tool === 'eraser' || tool === 'fillErase';
-    var hasTile = tool !== 'collision' && window.selection && selection.selected != null && selection.image;
+    var erasing = tool === 'eraser' || tool === 'fillErase' || (tool === 'rect' && editor.rectStart && editor.rectErase);
+    var hasTile = tool !== 'collision' && tool !== 'select' && !erasing && editor.hasBrush() && window.selection && selection.image;
+    if (tool === 'rect' && editor.rectStart) {
+        // Preview of the box being dragged: the pattern over it, or a red film.
+        var box = editor.currentRect();
+        if (hasTile) {
+            hoverCtx.globalAlpha = 0.55;
+            hoverCtx.imageSmoothingEnabled = false;
+            for (var by = box.y0; by <= box.y1; by++) for (var bx = box.x0; bx <= box.x1; bx++) {
+                var bt = editor.stampTile(bx, by, box.x0, box.y0);
+                if (bt) hoverCtx.drawImage(selection.image, bt[0], bt[1], cs, cs, bx * cs, by * cs, cs, cs);
+            }
+            hoverCtx.globalAlpha = 1;
+        } else {
+            hoverCtx.fillStyle = 'rgba(230,57,70,0.3)';
+            hoverCtx.fillRect(box.x0 * cs, box.y0 * cs, (box.x1 - box.x0 + 1) * cs, (box.y1 - box.y0 + 1) * cs);
+        }
+        drawMarquee(box, erasing ? 'rgba(245,101,101,0.95)' : 'rgba(255,255,255,0.95)');
+        return;
+    }
     if (tool === 'collision') {
         hoverCtx.fillStyle = 'rgba(230,57,70,0.35)';
         hoverCtx.fillRect(cell[0] * cs, cell[1] * cs, cs, cs);
@@ -1646,15 +1804,16 @@ function drawHover(cell) {
 
     // Each entry is [gx, gy, srcX, srcY]: the line tools repeat the picked
     // block as a pattern from the cell, the pencil stamps it once.
-    var w = hasTile ? selection.stampW : 1, h = hasTile ? selection.stampH : 1;
+    var size = hasTile ? editor.brushSize() : [1, 1], w = size[0], h = size[1];
     var cells = [];
-    var pattern = function(gx, gy) { var t = hasTile ? editor.stampTile(gx, gy, cell[0], cell[1]) : [0, 0]; cells.push([gx, gy, t[0], t[1]]); };
+    var pattern = function(gx, gy) { var t = hasTile ? editor.stampTile(gx, gy, cell[0], cell[1]) : [0, 0]; if (t) cells.push([gx, gy, t[0], t[1]]); };
     if (tool === 'rowFill') { for (var x = 0; x < editor.areaW; x++) pattern(x, cell[1]); }
     else if (tool === 'columnFill') { for (var y = 0; y < editor.areaH; y++) pattern(cell[0], y); }
-    else if (tool === 'pencil' && hasTile) {
+    else if ((tool === 'pencil' || tool === 'rect') && hasTile) {
         for (var r = 0; r < h; r++) for (var c = 0; c < w; c++) {
-            if (cell[0] + c < editor.areaW && cell[1] + r < editor.areaH) { var t = selection.tileFor(c, r); cells.push([cell[0] + c, cell[1] + r, t[0], t[1]]); }
+            if (cell[0] + c < editor.areaW && cell[1] + r < editor.areaH) { var t = editor.brushTile(c, r); if (t) cells.push([cell[0] + c, cell[1] + r, t[0], t[1]]); }
         }
+        if (cells.length === 0) cells.push([cell[0], cell[1], 0, 0]);
     }
     else pattern(cell[0], cell[1]);
 
@@ -1672,6 +1831,10 @@ function drawHover(cell) {
     var first = cells[0], last = cells[cells.length - 1];
     var rx = first[0] * cs, ry = first[1] * cs;
     var rw = (last[0] - first[0] + 1) * cs, rh = (last[1] - first[1] + 1) * cs;
+    if ((tool === 'pencil' || tool === 'rect') && hasTile) {
+        rx = cell[0] * cs; ry = cell[1] * cs;
+        rw = Math.min(w, editor.areaW - cell[0]) * cs; rh = Math.min(h, editor.areaH - cell[1]) * cs;
+    }
     hoverCtx.strokeStyle = 'rgba(0,0,0,0.8)';
     hoverCtx.strokeRect(rx + thin / 2, ry + thin / 2, rw - thin, rh - thin);
     hoverCtx.strokeStyle = (erasing || tool === 'collision') ? 'rgba(245,101,101,0.95)' : 'rgba(255,255,255,0.95)';
