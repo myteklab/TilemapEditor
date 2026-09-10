@@ -111,6 +111,10 @@ function Editor(areaW, areaH){
 			self.startPan(e);
 			return;
 		}
+		if (self.mode === 0 && !self.isLayerVisible(self.layer)) {
+			if (window.showToast) showToast('Layer ' + (self.layer + 1) + ' is hidden. Show it in the Layer menu to draw on it.', 'info');
+			return;
+		}
 		if (e.button === 0) {
 			self.mouseLeft = true;
 			self.strokeOpen = false;
@@ -178,6 +182,23 @@ function Editor(areaW, areaH){
 	this.blocks = [];
 	this.objects = [];
 	this.objectId = null;
+	// One {name, visible} per layer. Saved as the fifth element of a level,
+	// which loaders that only know four ignore.
+	this.layerMeta = [{ name: '', visible: true }];
+
+	this.metaFor = function(i){
+		if (!this.layerMeta[i]) this.layerMeta[i] = { name: '', visible: true };
+		return this.layerMeta[i];
+	}
+	this.isLayerVisible = function(i){ return this.metaFor(i).visible !== false; }
+	// Not an undo step: hiding a layer is a view choice, like the grid.
+	this.setLayerVisible = function(i, on){ this.metaFor(i).visible = !!on; this.Draw(); }
+	this.renameLayer = function(i, name){
+		name = String(name || '').trim().slice(0, 40);
+		if (name === this.metaFor(i).name) return;
+		this.saveState();
+		this.metaFor(i).name = name;
+	}
 
 	this.tilesetUrl = function(){
 		var el = $("tilemap");
@@ -191,6 +212,7 @@ function Editor(areaW, areaH){
 			tiles: JSON.parse(JSON.stringify(this.tiles)),
 			blocks: JSON.parse(JSON.stringify(this.blocks)),
 			objects: JSON.parse(JSON.stringify(this.objects)),
+			layerMeta: JSON.parse(JSON.stringify(this.layerMeta)),
 			layer: this.layer,
 			areaW: this.areaW,
 			areaH: this.areaH,
@@ -203,6 +225,7 @@ function Editor(areaW, areaH){
 		this.tiles = JSON.parse(JSON.stringify(state.tiles));
 		this.blocks = JSON.parse(JSON.stringify(state.blocks));
 		this.objects = JSON.parse(JSON.stringify(state.objects));
+		this.layerMeta = JSON.parse(JSON.stringify(state.layerMeta || []));
 		this.layer = Math.min(state.layer, this.tiles.length - 1);
 		var sizeChanged = state.areaW !== this.areaW || state.areaH !== this.areaH || state.cellSize !== this.cellSize;
 		this.areaW = state.areaW;
@@ -286,7 +309,8 @@ function Editor(areaW, areaH){
 				return layer.map(function(t){ return [t[4], t[0] / cs, t[1] / cs]; });
 			}),
 			this.blocks.map(function(b){ return [b[0] / cs, b[1] / cs]; }),
-			this.objects.map(function(o){ return [o[0] / cs, o[1] / cs, String(o[2])]; })
+			this.objects.map(function(o){ return [o[0] / cs, o[1] / cs, String(o[2])]; }),
+			this.tiles.map(function(layer, i){ var m = self.metaFor(i); return [m.name || '', m.visible === false ? 0 : 1]; })
 		];
 		$("output").value = "levels[1] = " + JSON.stringify(level) + ";";
 	}
@@ -349,6 +373,10 @@ function Editor(areaW, areaH){
 		}
 		if (this.tiles.length === 0) this.tiles.push([]);
 		if (this.layer >= this.tiles.length) this.layer = 0;
+		var meta = level[4] || [];
+		this.layerMeta = this.tiles.map(function(layer, i){
+			return { name: meta[i] ? String(meta[i][0] || '') : '', visible: meta[i] ? meta[i][1] !== 0 : true };
+		});
 
 		var blocks = level[2] || [];
 		for (var i = 0; i < blocks.length; i++) {
@@ -443,6 +471,28 @@ function Editor(areaW, areaH){
 		}
 	}
 
+	// The picked block repeated across the map, anchored at grid cell (ax, ay):
+	// what a fill or a line tool should put at (gx, gy). Returns [sx, sy, index].
+	this.stampTile = function(gx, gy, ax, ay){
+		var w = selection.stampW || 1, h = selection.stampH || 1;
+		var c = ((gx - ax) % w + w) % w, r = ((gy - ay) % h + h) % h;
+		return selection.tileFor(c, r);
+	}
+
+	// Puts one tile on a layer, replacing whatever is there. True if it changed.
+	this.putTile = function(layer, gx, gy, t){
+		var px = gx * this.cellSize, py = gy * this.cellSize;
+		for (var i = 0; i < layer.length; i++) {
+			if (layer[i][0] === px && layer[i][1] === py) {
+				if (layer[i][4] === t[2]) return false;
+				layer[i][2] = t[0]; layer[i][3] = t[1]; layer[i][4] = t[2];
+				return true;
+			}
+		}
+		layer.push([px, py, t[0], t[1], t[2]]);
+		return true;
+	}
+
 	this.placeBlock = function(){
 		var cell = this.cellUnderMouse(), px = cell[0], py = cell[1];
 		if (!this.inBounds(px, py)) return;
@@ -454,10 +504,22 @@ function Editor(areaW, areaH){
 		switch (this.mode) {
 			case 0:
 				if (!selection || selection.selected == null) return;
-				if (found >= 0 && buffer[found][4] === selection.selected) return;
+				var gx = px / this.cellSize, gy = py / this.cellSize;
+				var w = selection.stampW || 1, h = selection.stampH || 1;
+				// Find what would change before opening the undo step, so a
+				// drag over already-painted cells stays free.
+				var pending = [];
+				for (var r = 0; r < h; r++) {
+					for (var c = 0; c < w; c++) {
+						if (gx + c >= this.areaW || gy + r >= this.areaH) continue;
+						var t = selection.tileFor(c, r);
+						var existing = this.tileAt(buffer, gx + c, gy + r);
+						if (!existing || existing[4] !== t[2]) pending.push([gx + c, gy + r, t]);
+					}
+				}
+				if (pending.length === 0) return;
 				this.openStroke();
-				var tile = [px, py, selection.selectedX, selection.selectedY, selection.selected];
-				if (found >= 0) buffer[found] = tile; else buffer.push(tile);
+				for (var k = 0; k < pending.length; k++) this.putTile(buffer, pending[k][0], pending[k][1], pending[k][2]);
 				break;
 			case 1:
 				if (found >= 0) return;
@@ -526,18 +588,17 @@ function Editor(areaW, areaH){
 		if (gridX < 0 || gridY < 0 || gridX >= this.areaW || gridY >= this.areaH) return;
 		var start = this.tileAt(layer, gridX, gridY);
 		var target = start ? start[4] : null;
-		if (target === selection.selected) return;
-		var sx = selection.selectedX, sy = selection.selectedY, idx = selection.selected;
-		var changed = [];
+		var single = (selection.stampW || 1) === 1 && (selection.stampH || 1) === 1;
+		if (single && target === selection.selected) return;
+		var self2 = this, region = [];
 		this.flood(layer, gridX, gridY,
 			function(tile){ return (tile ? tile[4] : null) === target; },
-			function(x, y, tile){
-				if (tile) { tile[2] = sx; tile[3] = sy; tile[4] = idx; }
-				else changed.push([x * cs, y * cs, sx, sy, idx]);
-			});
-		if (changed.length === 0 && !start) return;
+			function(x, y, tile){ region.push([x, y]); });
+		if (region.length === 0) return;
 		this.saveState();
-		for (var i = 0; i < changed.length; i++) layer.push(changed[i]);
+		for (var i = 0; i < region.length; i++) {
+			this.putTile(layer, region[i][0], region[i][1], this.stampTile(region[i][0], region[i][1], gridX, gridY));
+		}
 		this.Draw();
 	}
 
@@ -562,47 +623,40 @@ function Editor(areaW, areaH){
 		this.Draw();
 	}
 
-	this.fillLine = function(cells){
+	// Grid cells, patterned from the clicked cell (ax, ay).
+	this.fillCells = function(cells, ax, ay){
 		var layer = this.currentBuffer();
-		var sx = selection.selectedX, sy = selection.selectedY, idx = selection.selected;
 		for (var c = 0; c < cells.length; c++) {
-			var px = cells[c][0], py = cells[c][1], found = false;
-			for (var i = 0; i < layer.length; i++) {
-				if (layer[i][0] === px && layer[i][1] === py) {
-					layer[i][2] = sx; layer[i][3] = sy; layer[i][4] = idx;
-					found = true;
-					break;
-				}
-			}
-			if (!found) layer.push([px, py, sx, sy, idx]);
+			this.putTile(layer, cells[c][0], cells[c][1], this.stampTile(cells[c][0], cells[c][1], ax, ay));
 		}
 		this.Draw();
 	}
 
 	this.fillRow = function(startX, startY) {
 		if (this.mode !== 0 || !selection || selection.selected == null) return;
-		var cs = this.cellSize, gy = Math.floor(startY / cs);
+		var cs = this.cellSize, gx = Math.floor(startX / cs), gy = Math.floor(startY / cs);
 		if (gy < 0 || gy >= this.areaH) return;
 		this.saveState();
 		var cells = [];
-		for (var x = 0; x < this.areaW; x++) cells.push([x * cs, gy * cs]);
-		this.fillLine(cells);
+		for (var x = 0; x < this.areaW; x++) cells.push([x, gy]);
+		this.fillCells(cells, gx, gy);
 	}
 
 	this.fillColumn = function(startX, startY) {
 		if (this.mode !== 0 || !selection || selection.selected == null) return;
-		var cs = this.cellSize, gx = Math.floor(startX / cs);
+		var cs = this.cellSize, gx = Math.floor(startX / cs), gy = Math.floor(startY / cs);
 		if (gx < 0 || gx >= this.areaW) return;
 		this.saveState();
 		var cells = [];
-		for (var y = 0; y < this.areaH; y++) cells.push([gx * cs, y * cs]);
-		this.fillLine(cells);
+		for (var y = 0; y < this.areaH; y++) cells.push([gx, y]);
+		this.fillCells(cells, gx, gy);
 	}
 
 	this.addLayer = function(){
 		if (this.tiles.length >= 10) return false;
 		this.saveState();
 		this.tiles.push([]);
+		this.layerMeta.push({ name: '', visible: true });
 		this.layer = this.tiles.length - 1;
 		this.Draw();
 		return true;
@@ -612,6 +666,7 @@ function Editor(areaW, areaH){
 		if (this.tiles.length <= 1) return false;
 		this.saveState();
 		this.tiles.splice(index, 1);
+		this.layerMeta.splice(index, 1);
 		if (this.layer >= this.tiles.length) this.layer = this.tiles.length - 1;
 		this.Draw();
 		return true;
@@ -685,7 +740,7 @@ function Editor(areaW, areaH){
 		if (this.drawTiles && selection && selection.image) {
 			for (var i = 0; i < this.tiles.length; i++) {
 				var layer = this.tiles[i];
-				if (!layer) continue;
+				if (!layer || !this.isLayerVisible(i)) continue;
 				if (this.drawLayer && i !== this.layer) continue;
 				this.ctx.globalAlpha = (i === this.layer || !this.showLayerTransparency || this.drawLayer) ? 1.0 : 0.3;
 				for (var j = 0; j < layer.length; j++) {
@@ -769,6 +824,10 @@ function SelectionFrame(image){
 	this.selected = null;
 	this.selectedX = 0;
 	this.selectedY = 0;
+	// A picked block is stampW x stampH cells with `selected` its top-left.
+	this.stampW = 1;
+	this.stampH = 1;
+	this.dragStart = null;
 
 	this.div = $("SelectionDiv");
 	this.canvas = $("SelectionCanvas");
@@ -796,22 +855,54 @@ function SelectionFrame(image){
 
 	this.select = function(index){
 		if (index == null || index < 0 || index >= this.tileCount()) { this.selected = null; this.Draw(); return; }
-		var cs = editor.cellSize;
 		var py = Math.floor(index / this.cellsX), px = index - py * this.cellsX;
-		this.selected = index;
-		this.selectedX = px * cs;
-		this.selectedY = py * cs;
+		this.selectRange(px, py, px, py);
+	}
+
+	this.selectRange = function(x0, y0, x1, y1){
+		var cs = editor.cellSize;
+		var l = Math.min(x0, x1), t = Math.min(y0, y1);
+		// Big enough for a house, small enough that the hover ghost stays cheap.
+		var r = Math.min(Math.max(x0, x1), l + 15), b = Math.min(Math.max(y0, y1), t + 15);
+		this.stampW = r - l + 1;
+		this.stampH = b - t + 1;
+		this.selected = t * this.cellsX + l;
+		this.selectedX = l * cs;
+		this.selectedY = t * cs;
 		this.Draw();
-		if (window.onTileSelected) window.onTileSelected(index);
+		if (window.onTileSelected) window.onTileSelected(this.selected);
+	}
+
+	// Tile (c, r) cells into the picked block: [srcX, srcY, index].
+	this.tileFor = function(c, r){
+		var cs = editor.cellSize;
+		var col = this.selectedX / cs + c, row = this.selectedY / cs + r;
+		return [col * cs, row * cs, row * this.cellsX + col];
+	}
+
+	// Palette cell under the mouse; clamped to the sheet while dragging so a
+	// drag past the edge still ends on the last tile.
+	this.cellAt = function(clamp){
+		var cs = editor.cellSize;
+		var px = Math.floor(this.mouseX / cs), py = Math.floor(this.mouseY / cs);
+		if (clamp) return [Math.max(0, Math.min(this.cellsX - 1, px)), Math.max(0, Math.min(this.cellsY - 1, py))];
+		if (px < 0 || py < 0 || px >= this.cellsX || py >= this.cellsY) return null;
+		return [px, py];
+	}
+
+	this.dragTo = function(){
+		var c = this.cellAt(true);
+		if (this.dragStart) this.selectRange(this.dragStart[0], this.dragStart[1], c[0], c[1]);
 	}
 
 	var self = this;
-	this.canvas.addEventListener('click', function(){
-		var cs = editor.cellSize;
-		var px = Math.floor(self.mouseX / cs);
-		var py = Math.floor(self.mouseY / cs);
-		if (px < 0 || py < 0 || px >= self.cellsX || py >= self.cellsY) return;
-		self.select(py * self.cellsX + px);
+	this.canvas.addEventListener('mousedown', function(e){
+		if (e.button !== 0) return;
+		e.preventDefault();
+		var c = self.cellAt(false);
+		if (!c) return;
+		self.dragStart = c;
+		self.selectRange(c[0], c[1], c[0], c[1]);
 	});
 
 	this.Draw = function(){
@@ -838,12 +929,13 @@ function SelectionFrame(image){
 		this.ctx.stroke();
 
 		if (this.selected != null) {
+			var sw = this.stampW * cs, sh = this.stampH * cs;
 			this.ctx.strokeStyle = "#ff0";
 			this.ctx.lineWidth = 3;
-			this.ctx.strokeRect(this.selectedX + 1, this.selectedY + 1, cs - 2, cs - 2);
+			this.ctx.strokeRect(this.selectedX + 1, this.selectedY + 1, sw - 2, sh - 2);
 			this.ctx.strokeStyle = "#f00";
 			this.ctx.lineWidth = 1;
-			this.ctx.strokeRect(this.selectedX, this.selectedY, cs, cs);
+			this.ctx.strokeRect(this.selectedX, this.selectedY, sw, sh);
 		}
 		this.ctx.strokeStyle = "#000";
 		this.ctx.lineWidth = 1;
@@ -882,6 +974,7 @@ window.addEventListener("mousemove", function(s) {
 		var scale = rect.width / selection.canvas.width || 1;
 		selection.mouseX = Math.floor((s.clientX - rect.left) / scale);
 		selection.mouseY = Math.floor((s.clientY - rect.top) / scale);
+		if (selection.dragStart) selection.dragTo();
 	}
 }, false);
 
@@ -889,6 +982,7 @@ window.addEventListener("mouseup", function(e) {
 	if (!window.editor) return;
 	if (editor.isPanning) editor.endPan();
 	if (e.button === 0) editor.mouseLeft = false;
+	if (e.button === 0 && selection) selection.dragStart = null;
 	if (e.button === 2) editor.mouseRight = false;
 	editor.strokeOpen = false;
 }, false);

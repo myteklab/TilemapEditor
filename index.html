@@ -223,6 +223,30 @@
         pointer-events: none;
     }
 
+    .menu-option .eye {
+        width: 22px;
+        height: 22px;
+        margin: -3px 0 -3px -3px;
+        border: none;
+        border-radius: 4px;
+        background: transparent;
+        color: #a0aec0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .menu-option .eye:hover {
+        background: #4a4d5a;
+        color: #fff;
+    }
+
+    .menu-option.hidden-layer .label,
+    .menu-option.hidden-layer .shortcut {
+        opacity: 0.5;
+    }
+
     .menu-divider {
         height: 1px;
         background: #3a3d4a;
@@ -798,6 +822,8 @@
         <symbol id="i-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4"/><path d="M9 11h6"/><path d="M9 15h4"/></symbol>
         <symbol id="i-mouse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="6"/><path d="M12 6v4"/></symbol>
         <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+        <symbol id="i-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 18 18"/><path d="M10.6 10.6a3 3 0 0 0 4.2 4.2"/><path d="M9.9 5.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.6 6.6C3.7 8.6 2 12 2 12s4 7 10 7c1.4 0 2.7-.3 3.8-.8"/></symbol>
+        <symbol id="i-rename" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></symbol>
         <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></symbol>
         <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></symbol>
         <symbol id="i-crosshair" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></symbol>
@@ -858,6 +884,8 @@
                 <div class="menu-option" onclick="addNewLayer()"><svg class="icon"><use href="#i-plus"/></svg><span class="label">Add Layer</span></div>
                 <div class="menu-option" onclick="removeCurrentLayer()"><svg class="icon"><use href="#i-trash"/></svg><span class="label">Remove Current Layer</span></div>
                 <div class="menu-option" onclick="clearCurrentLayer()"><svg class="icon"><use href="#i-eraser"/></svg><span class="label">Clear Current Layer</span></div>
+                <div class="menu-option" onclick="openModal('renameLayerModal')"><svg class="icon"><use href="#i-rename"/></svg><span class="label">Rename Current Layer...</span></div>
+                <div class="menu-option" onclick="toggleCurrentLayerVisible()"><svg class="icon"><use href="#i-eye"/></svg><span class="label">Hide or Show Current Layer</span><span class="shortcut">H</span></div>
                 <div class="menu-divider"></div>
                 <div id="layerList"></div>
             </div>
@@ -928,6 +956,21 @@
         </div>
     </div>
 
+    <div class="modal" id="renameLayerModal">
+        <div class="modal-header"><svg class="icon"><use href="#i-rename"/></svg>Rename Layer</div>
+        <div class="modal-content">
+            <div class="modal-field">
+                <label for="modalLayerName">Name for <span id="renameLayerWhich">Layer 1</span></label>
+                <input type="text" id="modalLayerName" maxlength="40" placeholder="Sky, Ground, Trees...">
+            </div>
+            <div class="modal-note"><svg class="icon"><use href="#i-info"/></svg><span>Leave it empty to go back to the plain layer number.</span></div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn-apply" onclick="applyLayerName()">Apply</button>
+        </div>
+    </div>
+
     <div class="modal" id="helpModal">
         <div class="modal-header"><svg class="icon"><use href="#i-bulb"/></svg>Quick Tips</div>
         <div class="modal-content" style="max-height: 420px; overflow-y: auto;">
@@ -935,6 +978,7 @@
                 <h3><svg class="icon"><use href="#i-pencil"/></svg>Drawing</h3>
                 <ul>
                     <li>Pick a tile on the right, then left-click or drag on the map to place it</li>
+                    <li>Drag across several palette tiles to pick a block; the pencil stamps the whole block, and the fill tools repeat it as a pattern</li>
                     <li>Right-click erases, whatever tool is selected</li>
                     <li>Fill covers a connected empty area, or replaces a connected run of the same tile</li>
                     <li>Fill Erase removes a connected run of the same tile</li>
@@ -946,6 +990,7 @@
                     <li>Layer 1 is the background; higher layers draw on top</li>
                     <li>Press 1 to 9 or use the Layer menu to switch, and add up to 10 layers</li>
                     <li>Other layers are faded so you can see what you are drawing over. Turn that off in View</li>
+                    <li>The eye in the Layer menu hides a layer; H hides or shows the current one. Layers can be renamed</li>
                 </ul>
 
                 <h3><svg class="icon"><use href="#i-tileset"/></svg>Tileset</h3>
@@ -990,6 +1035,7 @@
                 <tr><td>C</td><td>Column Fill</td></tr>
                 <tr><td>1 to 9</td><td>Switch layer</td></tr>
                 <tr><td>G</td><td>Show or hide the grid</td></tr>
+                <tr><td>H</td><td>Hide or show the current layer</td></tr>
                 <tr><td>+ and -</td><td>Zoom in and out</td></tr>
                 <tr><td>0</td><td>Reset zoom to 100%</td></tr>
                 <tr><td>Space + drag</td><td>Pan the map</td></tr>
@@ -1095,13 +1141,14 @@
             <div id="SelectionDiv">
                 <canvas id="SelectionCanvas">Your browser does not support the HTML5 canvas element.</canvas>
             </div>
-            <div class="palette-hint">Click a tile to pick it up, then draw on the map.</div>
+            <div class="palette-hint">Click a tile to pick it up, or drag across several to pick a block, then draw on the map.</div>
         </div>
     </div>
 
     <div class="status-bar" id="statusBar">
         <span><svg class="icon"><use href="#i-map"/></svg>Map <b id="statusMap">50 x 30</b></span>
         <span><svg class="icon"><use href="#i-tile"/></svg>Tile <b id="statusTile">16 px</b></span>
+        <span><svg class="icon"><use href="#i-layers"/></svg>Layer <b id="statusLayer">1</b></span>
         <span><svg class="icon"><use href="#i-crosshair"/></svg>Cell <b id="statusCell">-</b></span>
         <span><svg class="icon"><use href="#i-tileset"/></svg>Picked <b id="statusPicked">none</b></span>
         <span class="grow"></span>
@@ -1202,7 +1249,6 @@ function refreshAll() {
     setChecked('tilesCheck', editor.drawTiles);
     setChecked('layerOnlyCheck', editor.drawLayer);
     setChecked('transparencyCheck', editor.showLayerTransparency);
-    document.getElementById('currentLayerIndicator').textContent = editor.layer + 1;
     fitPaletteScale();
     updateLayerList();
     updateEditMenu();
@@ -1247,6 +1293,7 @@ document.addEventListener('keydown', function(e) {
         case 'r': selectTool('rowFill'); break;
         case 'c': selectTool('columnFill'); break;
         case 'g': toggleViewOption('grid'); break;
+        case 'h': toggleCurrentLayerVisible(); break;
         case '+': case '=': editor.zoomIn(); break;
         case '-': editor.zoomOut(); break;
         case '0': editor.resetZoom(); break;
@@ -1315,30 +1362,62 @@ function toggleViewOption(option) {
 
 var LAYER_ROLE = ['Background', 'Middle', 'Foreground'];
 
+// "Layer 2: Sky" once named, "Layer 2 (Middle)" until then.
+function layerLabel(i) {
+    var name = editor.metaFor(i).name;
+    if (name) return 'Layer ' + (i + 1) + ': ' + name;
+    return 'Layer ' + (i + 1) + (LAYER_ROLE[i] ? ' (' + LAYER_ROLE[i] + ')' : '');
+}
+
 function updateLayerList() {
     if (!window.editor) return;
     var layerList = document.getElementById('layerList');
     layerList.innerHTML = '';
     for (var i = 0; i < editor.tiles.length; i++) {
         var item = document.createElement('div');
-        item.className = 'menu-option' + (i === editor.layer ? ' checked' : '');
-        var role = LAYER_ROLE[i] ? ' (' + LAYER_ROLE[i] + ')' : '';
+        var visible = editor.isLayerVisible(i);
+        item.className = 'menu-option' + (i === editor.layer ? ' checked' : '') + (visible ? '' : ' hidden-layer');
         var count = editor.tiles[i] ? editor.tiles[i].length : 0;
-        item.innerHTML = '<span class="check"><svg class="icon"><use href="#i-chevron"/></svg></span>' +
+        item.innerHTML = '<button class="eye" title="' + (visible ? 'Hide' : 'Show') + '"><svg class="icon"><use href="' + (visible ? '#i-eye' : '#i-eye-off') + '"/></svg></button>' +
+            '<span class="check"><svg class="icon"><use href="#i-chevron"/></svg></span>' +
             '<span class="label"></span><span class="shortcut"></span>';
-        item.querySelector('.label').textContent = 'Layer ' + (i + 1) + role;
+        item.querySelector('.label').textContent = layerLabel(i);
         item.querySelector('.shortcut').textContent = count === 1 ? '1 tile' : count + ' tiles';
         item.onclick = (function(index) { return function() { selectLayer(index); }; })(i);
+        // The eye toggles in place; the menu stays open so several can be flipped.
+        item.querySelector('.eye').onclick = (function(index) { return function(e) {
+            e.stopPropagation();
+            editor.setLayerVisible(index, !editor.isLayerVisible(index));
+            updateLayerList();
+        }; })(i);
         layerList.appendChild(item);
     }
+    var indicator = document.getElementById('currentLayerIndicator');
+    indicator.textContent = editor.layer + 1;
+    indicator.parentNode.title = layerLabel(editor.layer) + (editor.isLayerVisible(editor.layer) ? '' : ' (hidden)');
+    var status = document.getElementById('statusLayer');
+    if (status) status.textContent = layerLabel(editor.layer).replace('Layer ', '') + (editor.isLayerVisible(editor.layer) ? '' : ', hidden');
 }
 
 function selectLayer(layerIndex) {
     if (!window.editor) return;
     editor.layer = layerIndex;
-    document.getElementById('currentLayerIndicator').textContent = layerIndex + 1;
     updateLayerList();
     editor.Draw();
+}
+
+function toggleCurrentLayerVisible() {
+    if (!window.editor) return;
+    editor.setLayerVisible(editor.layer, !editor.isLayerVisible(editor.layer));
+    updateLayerList();
+    showToast(layerLabel(editor.layer) + (editor.isLayerVisible(editor.layer) ? ' is visible' : ' is hidden'), 'info', 1500);
+}
+
+function applyLayerName() {
+    if (!window.editor) return;
+    editor.renameLayer(editor.layer, document.getElementById('modalLayerName').value);
+    updateLayerList();
+    closeModal();
 }
 
 function addNewLayer() {
@@ -1412,7 +1491,11 @@ function updateStatus() {
     document.getElementById('statusTile').textContent = editor.cellSize + ' px';
     document.getElementById('statusZoom').textContent = Math.round(editor.zoom * 100) + '%';
     document.getElementById('statusCell').textContent = lastHoverCell ? lastHoverCell[0] + ', ' + lastHoverCell[1] : '-';
-    var picked = window.selection && selection.selected != null ? '#' + selection.selected : 'none';
+    var picked = 'none';
+    if (window.selection && selection.selected != null) {
+        picked = '#' + selection.selected;
+        if (selection.stampW > 1 || selection.stampH > 1) picked += ' (' + selection.stampW + ' x ' + selection.stampH + ')';
+    }
     document.getElementById('statusPicked').textContent = picked;
 }
 
@@ -1468,16 +1551,25 @@ function drawHover(cell) {
     var erasing = tool === 'eraser' || tool === 'fillErase';
     var hasTile = window.selection && selection.selected != null && selection.image;
 
+    // Each entry is [gx, gy, srcX, srcY]: the line tools repeat the picked
+    // block as a pattern from the cell, the pencil stamps it once.
+    var w = hasTile ? selection.stampW : 1, h = hasTile ? selection.stampH : 1;
     var cells = [];
-    if (tool === 'rowFill') { for (var x = 0; x < editor.areaW; x++) cells.push([x, cell[1]]); }
-    else if (tool === 'columnFill') { for (var y = 0; y < editor.areaH; y++) cells.push([cell[0], y]); }
-    else cells.push(cell);
+    var pattern = function(gx, gy) { var t = hasTile ? editor.stampTile(gx, gy, cell[0], cell[1]) : [0, 0]; cells.push([gx, gy, t[0], t[1]]); };
+    if (tool === 'rowFill') { for (var x = 0; x < editor.areaW; x++) pattern(x, cell[1]); }
+    else if (tool === 'columnFill') { for (var y = 0; y < editor.areaH; y++) pattern(cell[0], y); }
+    else if (tool === 'pencil' && hasTile) {
+        for (var r = 0; r < h; r++) for (var c = 0; c < w; c++) {
+            if (cell[0] + c < editor.areaW && cell[1] + r < editor.areaH) { var t = selection.tileFor(c, r); cells.push([cell[0] + c, cell[1] + r, t[0], t[1]]); }
+        }
+    }
+    else pattern(cell[0], cell[1]);
 
     if (hasTile && !erasing) {
         hoverCtx.globalAlpha = 0.55;
         hoverCtx.imageSmoothingEnabled = false;
         for (var i = 0; i < cells.length; i++) {
-            hoverCtx.drawImage(selection.image, selection.selectedX, selection.selectedY, cs, cs, cells[i][0] * cs, cells[i][1] * cs, cs, cs);
+            hoverCtx.drawImage(selection.image, cells[i][2], cells[i][3], cs, cs, cells[i][0] * cs, cells[i][1] * cs, cs, cs);
         }
         hoverCtx.globalAlpha = 1;
     }
@@ -1540,6 +1632,9 @@ function openModal(modalId) {
         } else if (modalId === 'tilesetModal') {
             var url = document.getElementById('tilemap').value || '';
             document.getElementById('modalTilesetUrl').value = url.indexOf('data:') === 0 ? '' : url;
+        } else if (modalId === 'renameLayerModal') {
+            document.getElementById('renameLayerWhich').textContent = 'Layer ' + (editor.layer + 1);
+            document.getElementById('modalLayerName').value = editor.metaFor(editor.layer).name;
         }
     }
     var first = modal.querySelector('input[type="text"], input[type="number"]');
@@ -1719,7 +1814,7 @@ function openExportPNGModal() {
         var preview = generateLayerPreview(i, 48, 32);
         if (preview) preview.style.cssText = 'border: 1px solid #3a3d4a; border-radius: 3px; flex-shrink: 0;';
         var text = document.createElement('span');
-        text.textContent = 'Layer ' + (i + 1);
+        text.textContent = layerLabel(i);
         text.style.cssText = 'color: #e2e8f0; flex-grow: 1;';
         var tileCount = editor.tiles[i].length;
         var badge = document.createElement('span');
