@@ -11,7 +11,9 @@ A browser-based tile map editor for building game levels. Vanilla JavaScript and
 - **Zoom and pan**: wheel zooms toward the pointer (25% to 400%), Space+drag or middle-drag pans
 - **Undo and redo** across drawing, layer changes, resizes and tileset swaps
 - **Hover preview**: a ghost of the picked tile shows where it will land
-- **Export**: the project as a JSON file, or any set of layers as a transparent PNG
+- **Solid cells**: mark walls the game should not let the player through, saved with the map
+- **Layers** can be hidden and named
+- **Export**: the project as a JSON file, any set of layers as a transparent PNG, or a GameBuilder project
 
 ## Getting Started
 
@@ -43,7 +45,9 @@ bottom, at the current tile size.
 |-----|--------|
 | P, E, F, X, R, C | Pencil, Eraser, Fill, Fill Erase, Row Fill, Column Fill |
 | 1 to 9 | Switch layer |
+| S | Solid |
 | G | Show or hide the grid |
+| H | Hide or show the current layer |
 | + / - / 0 | Zoom in, zoom out, reset to 100% |
 | Space + drag | Pan |
 | Ctrl+Z / Ctrl+Y | Undo / Redo |
@@ -53,12 +57,18 @@ bottom, at the current tile size.
 
 ## Embedding
 
-The page is self-contained. A host that stores projects itself can listen for three cancelable events on `window`
+The page is self-contained. A host that stores projects itself can listen for cancelable events on `window`
 and call `preventDefault()` to take them over:
 
 - `tilemapeditor:save` with `detail.data`, the project JSON string
 - `tilemapeditor:exportImage` with `detail.dataUrl` and `detail.filename`
-- `tilemapeditor:pickTileset`, after which the host calls `applyTilesetUrl(url)`
+- `tilemapeditor:pickTileset` with `detail.library` (true for "Browse the library"), after which the host calls
+  `applyTilesetUrl(url)`
+- `tilemapeditor:exportToGameBuilder` with `detail.projectData`, a GameBuilder project (save format 3.1) whose
+  first level is the map: layer 1 as terrain, other visible layers flattened to decoration, solid cells voting on
+  which terrain tiles collide
+- `tilemapeditor:hello`, sent once at startup with `detail.features`; a host that cancels it and pushes
+  `'library'` or `'gamebuilder'` into the array unhides the matching buttons and menu items
 
 `window.serializeProjectData()` and `window.loadProjectData(json)` round-trip the whole project.
 

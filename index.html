@@ -793,6 +793,20 @@
     .hidden-io {
         display: none;
     }
+
+    /* Shown once the host says it can do these. */
+    [data-host-feature] {
+        display: none;
+    }
+
+    .hosted [data-host-feature].available {
+        display: flex;
+    }
+
+    .modal-btn-apply[data-host-feature].available,
+    .btn-secondary[data-host-feature].available {
+        display: inline-flex;
+    }
     </style>
 </head>
 <body>
@@ -825,6 +839,8 @@
         <symbol id="i-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 18 18"/><path d="M10.6 10.6a3 3 0 0 0 4.2 4.2"/><path d="M9.9 5.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.6 6.6C3.7 8.6 2 12 2 12s4 7 10 7c1.4 0 2.7-.3 3.8-.8"/></symbol>
         <symbol id="i-rename" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></symbol>
         <symbol id="i-solid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m3 10 7-7"/><path d="M3 17 17 3"/><path d="m6 21 15-15"/><path d="m13 21 8-8"/></symbol>
+        <symbol id="i-gamepad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4"/><path d="M8 9v4"/><path d="M15 12h.01"/><path d="M18 10h.01"/><path d="M17.3 5H6.7a4 4 0 0 0-4 3.6l-.7 7.4a2.5 2.5 0 0 0 4.4 1.8L9 15h6l2.6 2.8a2.5 2.5 0 0 0 4.4-1.8l-.7-7.4a4 4 0 0 0-4-3.6z"/></symbol>
+        <symbol id="i-library" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h4v16H4z"/><path d="M10 4h4v16h-4z"/><path d="m16 5 4-1 3 15-4 1z"/></symbol>
         <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></symbol>
         <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14"/><path d="M15 6v14"/></symbol>
         <symbol id="i-crosshair" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></symbol>
@@ -850,6 +866,7 @@
             <div class="menu-dropdown" id="fileMenu">
                 <div class="menu-option" onclick="saveProject()"><svg class="icon"><use href="#i-save"/></svg><span class="label">Save</span><span class="shortcut">Ctrl+S</span></div>
                 <div class="menu-option" onclick="openExportPNGModal()"><svg class="icon"><use href="#i-image"/></svg><span class="label">Export PNG...</span></div>
+                <div class="menu-option" data-host-feature="gamebuilder" onclick="openModal('gameBuilderModal')"><svg class="icon"><use href="#i-gamepad"/></svg><span class="label">Send to GameBuilder...</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-option" onclick="openProjectFile()"><svg class="icon"><use href="#i-folder"/></svg><span class="label">Open Project File...</span></div>
                 <div class="menu-divider"></div>
@@ -949,14 +966,34 @@
                     <button class="btn-secondary" onclick="pasteFromClipboard()" title="Paste from clipboard"><svg class="icon"><use href="#i-clipboard"/></svg>Paste</button>
                 </div>
             </div>
-            <div class="modal-field">
-                <button class="btn-secondary" onclick="pickTilesetImage()"><svg class="icon"><use href="#i-folder"/></svg>Choose an image...</button>
+            <div class="modal-field btn-row">
+                <button class="btn-secondary" onclick="pickTilesetImage(false)"><svg class="icon"><use href="#i-folder"/></svg>Choose an image...</button>
+                <button class="btn-secondary" data-host-feature="library" onclick="pickTilesetImage(true)"><svg class="icon"><use href="#i-library"/></svg>Browse the library</button>
             </div>
             <div class="modal-note warn"><svg class="icon"><use href="#i-warning"/></svg><span>Tiles already on the map keep their tile numbers, so a tileset laid out differently will change how the map looks.</span></div>
         </div>
         <div class="modal-buttons">
             <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
             <button class="modal-btn-apply" onclick="applyTilesetUrl()">Apply</button>
+        </div>
+    </div>
+
+    <div class="modal" id="gameBuilderModal">
+        <div class="modal-header"><svg class="icon"><use href="#i-gamepad"/></svg>Send to GameBuilder</div>
+        <div class="modal-content">
+            <div class="help-section" style="font-size: 13px; line-height: 1.6;">
+                <p style="margin-bottom: 10px;">This makes a new GameBuilder project with your map as its first level. GameBuilder opens in this tab, so save your map first.</p>
+                <ul style="margin-bottom: 14px;">
+                    <li>Layer 1 becomes the ground the player walks on</li>
+                    <li>The other visible layers become decoration in front of it</li>
+                    <li>Solid cells decide which ground tiles are walls; with none marked, every ground tile is solid</li>
+                </ul>
+            </div>
+            <div class="modal-note" id="gameBuilderNote"><svg class="icon"><use href="#i-info"/></svg><span></span></div>
+        </div>
+        <div class="modal-buttons">
+            <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn-apply" onclick="sendToGameBuilder()">Open in GameBuilder</button>
         </div>
     </div>
 
@@ -1254,7 +1291,22 @@ function onEditorReady() {
 
     setupHoverOverlay();
     refreshAll();
+    announceToHost();
     hideLoadingOverlay();
+}
+
+// A host that embeds the page answers this with the extras it can do
+// ('library', 'gamebuilder'); the matching buttons and menu items appear.
+var hostFeatures = [];
+
+function announceToHost() {
+    var ev = new CustomEvent('tilemapeditor:hello', { cancelable: true, detail: { features: [] } });
+    if (window.dispatchEvent(ev)) return;
+    hostFeatures = ev.detail.features.slice();
+    document.body.classList.add('hosted');
+    document.querySelectorAll('[data-host-feature]').forEach(function(el) {
+        el.classList.toggle('available', hostFeatures.indexOf(el.dataset.hostFeature) >= 0);
+    });
 }
 
 function refreshAll() {
@@ -1673,6 +1725,12 @@ function openModal(modalId) {
         } else if (modalId === 'tilesetModal') {
             var url = document.getElementById('tilemap').value || '';
             document.getElementById('modalTilesetUrl').value = url.indexOf('data:') === 0 ? '' : url;
+        } else if (modalId === 'gameBuilderModal') {
+            var note = document.getElementById('gameBuilderNote').querySelector('span');
+            var used = countUsedTiles();
+            if (used === 0) note.textContent = 'The map is empty, so there is nothing to send yet.';
+            else if (editor.areaH > 100 || editor.areaW > 500) note.textContent = 'GameBuilder levels are at most 500 wide and 100 tall; rows and columns past that are left off.';
+            else note.textContent = used + (used === 1 ? ' kind of tile' : ' kinds of tiles') + ' will be added to the GameBuilder tile palette.';
         } else if (modalId === 'renameLayerModal') {
             document.getElementById('renameLayerWhich').textContent = 'Layer ' + (editor.layer + 1);
             document.getElementById('modalLayerName').value = editor.metaFor(editor.layer).name;
@@ -1750,8 +1808,8 @@ function applyTilesetUrl(url) {
 
 // The host page may take over picking (a file library, say) by cancelling
 // this event and calling applyTilesetUrl itself. Otherwise it is a local file.
-function pickTilesetImage() {
-    var ev = new CustomEvent('tilemapeditor:pickTileset', { cancelable: true });
+function pickTilesetImage(fromLibrary) {
+    var ev = new CustomEvent('tilemapeditor:pickTileset', { cancelable: true, detail: { library: !!fromLibrary } });
     if (!window.dispatchEvent(ev)) return;
     document.getElementById('tilesetFileInput').click();
 }
@@ -1764,6 +1822,120 @@ document.getElementById('tilesetFileInput').addEventListener('change', function(
     reader.onload = function() { applyTilesetUrl(reader.result); };
     reader.readAsDataURL(file);
 });
+
+// ---- GameBuilder -----------------------------------------------------------
+
+function countUsedTiles() {
+    var seen = {}, n = 0;
+    for (var l = 0; l < editor.tiles.length; l++) {
+        if (!editor.isLayerVisible(l)) continue;
+        for (var i = 0; i < editor.tiles[l].length; i++) {
+            var idx = editor.tiles[l][i][4];
+            if (!seen[idx]) { seen[idx] = true; n++; }
+        }
+    }
+    return n;
+}
+
+// GameBuilder names tiles with single characters, A to Z, a to z, 0 to 9,
+// then on from '!' skipping the '.' that means empty. Same order as its own
+// getNextTileKey so a palette built here looks like one built there.
+function gameBuilderKey(n) {
+    var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    if (n < alphabet.length) return alphabet[n];
+    var code = 33 + (n - alphabet.length);
+    if (code >= 46) code++;
+    return String.fromCharCode(code);
+}
+
+function tilesetDataUrl() {
+    var img = selection.image;
+    var c = document.createElement('canvas');
+    c.width = img.width;
+    c.height = img.height;
+    c.getContext('2d').drawImage(img, 0, 0);
+    try { return c.toDataURL('image/png'); }
+    catch (err) { return document.getElementById('tilemap').value; }
+}
+
+// A GameBuilder project (its save format, version 3.1) with one level:
+// layer 1 is the terrain grid, every other visible layer is flattened into
+// the decoration grid, and solid cells vote on which terrain tiles collide.
+function buildGameBuilderProject() {
+    var cs = editor.cellSize, w = editor.areaW, h = editor.areaH;
+    var keys = {}, defs = {}, count = 0;
+    var placed = {}, solidHits = {};
+    var solidAt = {};
+    for (var b = 0; b < editor.blocks.length; b++) solidAt[(editor.blocks[b][0] / cs) + ',' + (editor.blocks[b][1] / cs)] = true;
+
+    var keyFor = function(t) {
+        if (keys[t[4]] === undefined) {
+            keys[t[4]] = gameBuilderKey(count++);
+            defs[keys[t[4]]] = { x: t[2], y: t[3], solid: true, name: 'Tile ' + keys[t[4]] };
+        }
+        return keys[t[4]];
+    };
+    var emptyRows = function() { var rows = []; for (var y = 0; y < h; y++) rows.push(new Array(w).fill('.')); return rows; };
+
+    var terrain = emptyRows();
+    var ground = editor.tiles[0] || [];
+    if (editor.isLayerVisible(0)) {
+        for (var i = 0; i < ground.length; i++) {
+            var t = ground[i], gx = t[0] / cs, gy = t[1] / cs;
+            terrain[gy][gx] = keyFor(t);
+            placed[t[4]] = (placed[t[4]] || 0) + 1;
+            if (solidAt[gx + ',' + gy]) solidHits[t[4]] = (solidHits[t[4]] || 0) + 1;
+        }
+    }
+    var decor = emptyRows();
+    for (var l = 1; l < editor.tiles.length; l++) {
+        if (!editor.isLayerVisible(l)) continue;
+        for (var j = 0; j < editor.tiles[l].length; j++) {
+            var d = editor.tiles[l][j];
+            decor[d[1] / cs][d[0] / cs] = keyFor(d);
+        }
+    }
+    if (editor.blocks.length > 0) {
+        for (var idx in placed) defs[keys[idx]].solid = (solidHits[idx] || 0) * 2 >= placed[idx];
+    }
+
+    var level = {
+        id: 'level_1', name: 'Level 1', levelType: 'gameplay',
+        width: w, height: h,
+        tiles: terrain.map(function(r) { return r.join(''); }),
+        decorTiles: decor.map(function(r) { return r.join(''); }),
+        gameObjects: [], spawnPoint: null, backgroundLayers: [],
+        goalCondition: 'goal', nextLevelId: null, requiredScore: 0, timeLimit: 0,
+        sounds: { bgm: '', bgmVolume: 0.5, levelComplete: '', gameOver: '' },
+        autoscrollEnabled: false, autoscrollSpeed: 3, autoscrollMode: 'end',
+        backgroundParticleEffect: '', backgroundParticleSpawnMode: 'auto',
+        bgColor: '#222a36'
+    };
+    return {
+        version: '3.1',
+        tileSize: cs,
+        tiles: defs,
+        customTiles: {},
+        nextCustomTileId: 1,
+        levels: [level],
+        currentLevelIndex: 0,
+        tilesetData: tilesetDataUrl()
+    };
+}
+
+function sendToGameBuilder() {
+    if (!window.editor || !window.selection || !selection.image) return;
+    if (countUsedTiles() === 0) {
+        showToast('Put some tiles on the map first.', 'error');
+        return;
+    }
+    var project = buildGameBuilderProject();
+    closeModal();
+    var ev = new CustomEvent('tilemapeditor:exportToGameBuilder', { cancelable: true, detail: { projectData: project } });
+    if (!window.dispatchEvent(ev)) { showToast('Opening GameBuilder...', 'info', 6000); return; }
+    downloadText('gamebuilder-project.json', JSON.stringify(project), 'application/json');
+    showToast('Saved gamebuilder-project.json');
+}
 
 // ---- Save, open, export --------------------------------------------------
 
