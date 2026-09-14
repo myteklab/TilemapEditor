@@ -60,6 +60,7 @@ tile size, gap and border. Collisions are `[gridX, gridY]` cells.
 | Ctrl+Z / Ctrl+Y | Undo / Redo |
 | Ctrl+S | Save |
 | Esc | Close menus and dialogs |
+| F1 or ? | Open help for the current tool |
 | Right click | Erase |
 
 ## Embedding

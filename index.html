@@ -446,6 +446,262 @@
         color: #f6ad55;
     }
 
+    .help-modal {
+        width: min(860px, 94vw);
+        max-width: none;
+        height: min(640px, 88vh);
+        display: none;
+        flex-direction: column;
+    }
+
+    .help-modal.show {
+        display: flex;
+    }
+
+    .help-modal .modal-header {
+        flex-shrink: 0;
+    }
+
+    .help-close {
+        margin-left: auto;
+        cursor: pointer;
+        color: #a0aec0;
+        display: inline-flex;
+    }
+
+    .help-close:hover {
+        color: #fff;
+    }
+
+    .help-shell {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .help-nav {
+        width: 210px;
+        flex-shrink: 0;
+        border-right: 1px solid #3a3d4a;
+        display: flex;
+        flex-direction: column;
+        background: #23262f;
+        border-radius: 0 0 0 8px;
+    }
+
+    .help-search {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px;
+        border-bottom: 1px solid #3a3d4a;
+        color: #718096;
+    }
+
+    .help-search input {
+        flex: 1;
+        min-width: 0;
+        background: #0f1119;
+        border: 1px solid #3a3d4a;
+        border-radius: 4px;
+        color: #fff;
+        font-size: 12px;
+        padding: 5px 7px;
+        font-family: inherit;
+    }
+
+    .help-search input:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    #helpTopics {
+        overflow-y: auto;
+        padding: 6px 0;
+        flex: 1;
+    }
+
+    .help-topic {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 7px 12px;
+        font-size: 12.5px;
+        color: #cbd5e0;
+        cursor: pointer;
+        border-left: 3px solid transparent;
+    }
+
+    .help-topic .icon {
+        color: #718096;
+        width: 15px;
+        height: 15px;
+    }
+
+    .help-topic:hover {
+        background: #2a2d3a;
+        color: #fff;
+    }
+
+    .help-topic.current {
+        background: var(--accent-soft);
+        border-left-color: var(--accent);
+        color: #fff;
+    }
+
+    .help-topic.current .icon {
+        color: var(--accent);
+    }
+
+    .help-topic.dim {
+        display: none;
+    }
+
+    .help-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 26px 28px;
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: #e2e8f0;
+        border-radius: 0 0 8px 0;
+    }
+
+    .help-body h2 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0 0 6px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .help-body h2 .icon {
+        color: var(--accent);
+        width: 20px;
+        height: 20px;
+    }
+
+    .help-body h3 {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+        margin: 20px 0 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .help-body p {
+        margin: 0 0 10px;
+    }
+
+    .help-body ul, .help-body ol {
+        margin: 0 0 12px 22px;
+    }
+
+    .help-body li {
+        margin-bottom: 4px;
+    }
+
+    .help-body .lead {
+        color: #a0aec0;
+        margin-bottom: 14px;
+    }
+
+    .help-body kbd {
+        display: inline-block;
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 600;
+        color: #e2e8f0;
+        background: #1a1d2a;
+        border: 1px solid #4a4d5a;
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        padding: 0 6px;
+        line-height: 18px;
+        vertical-align: 1px;
+        white-space: nowrap;
+    }
+
+    .help-body .tool-card {
+        display: grid;
+        grid-template-columns: 40px 1fr;
+        gap: 4px 12px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        background: #1a1d2a;
+        border: 1px solid #3a3d4a;
+        border-radius: 6px;
+    }
+
+    .help-body .tool-card .icon {
+        width: 28px;
+        height: 28px;
+        color: #cbd5e0;
+        grid-row: span 2;
+        align-self: start;
+        margin-top: 2px;
+    }
+
+    .help-body .tool-card b {
+        font-weight: 600;
+    }
+
+    .help-body .tool-card b kbd {
+        margin-left: 6px;
+    }
+
+    .help-body .tool-card span {
+        color: #cbd5e0;
+        font-size: 13px;
+    }
+
+    .help-body .note {
+        background: #1a1d2a;
+        border-left: 3px solid var(--accent);
+        border-radius: 4px;
+        padding: 8px 12px;
+        margin: 10px 0 14px;
+        font-size: 12.5px;
+        color: #cbd5e0;
+    }
+
+    .help-body .note.warn {
+        border-left-color: #f6ad55;
+    }
+
+    .help-body a {
+        color: var(--accent);
+        cursor: pointer;
+        text-decoration: underline;
+        text-decoration-color: rgba(76, 141, 255, 0.4);
+    }
+
+    .help-body .menu-path {
+        color: #fff;
+        font-weight: 500;
+    }
+
+    .help-body .menu-path .icon {
+        width: 13px;
+        height: 13px;
+        vertical-align: -2px;
+        margin: 0 2px;
+        color: #a0aec0;
+    }
+
+    .help-body mark {
+        background: rgba(246, 173, 85, 0.35);
+        color: inherit;
+        border-radius: 2px;
+    }
+
+    @media (max-width: 640px) {
+        .help-shell { flex-direction: column; }
+        .help-nav { width: auto; border-right: none; border-bottom: 1px solid #3a3d4a; max-height: 38%; }
+    }
+
     .shortcut-table {
         width: 100%;
         border-collapse: collapse;
@@ -942,8 +1198,12 @@
         <div class="menu-item" data-menu="helpMenu" onclick="toggleMenu('helpMenu')">
             Help
             <div class="menu-dropdown" id="helpMenu">
-                <div class="menu-option" onclick="openModal('helpModal')"><svg class="icon"><use href="#i-bulb"/></svg><span class="label">Quick Tips</span></div>
-                <div class="menu-option" onclick="openModal('shortcutsModal')"><svg class="icon"><use href="#i-keyboard"/></svg><span class="label">Keyboard Shortcuts</span></div>
+                <div class="menu-option" onclick="openHelp('start')"><svg class="icon"><use href="#i-bulb"/></svg><span class="label">Help</span><span class="shortcut">F1</span></div>
+                <div class="menu-option" onclick="openHelp('tools')"><svg class="icon"><use href="#i-pencil"/></svg><span class="label">The Tools</span></div>
+                <div class="menu-option" onclick="openHelp('shortcuts')"><svg class="icon"><use href="#i-keyboard"/></svg><span class="label">Keyboard Shortcuts</span></div>
+                <div class="menu-option" onclick="openHelp('trouble')"><svg class="icon"><use href="#i-warning"/></svg><span class="label">Something Is Wrong</span></div>
+                <div class="menu-divider"></div>
+                <div class="menu-option" onclick="openHelp('new')"><svg class="icon"><use href="#i-check-circle"/></svg><span class="label">What's New</span></div>
             </div>
         </div>
     </div>
@@ -1051,96 +1311,14 @@
         </div>
     </div>
 
-    <div class="modal" id="helpModal">
-        <div class="modal-header"><svg class="icon"><use href="#i-bulb"/></svg>Quick Tips</div>
-        <div class="modal-content" style="max-height: 420px; overflow-y: auto;">
-            <div class="help-section" style="font-size: 13px; line-height: 1.7;">
-                <h3><svg class="icon"><use href="#i-pencil"/></svg>Drawing</h3>
-                <ul>
-                    <li>Pick a tile on the right, then left-click or drag on the map to place it</li>
-                    <li>Drag across several palette tiles to pick a block; the pencil stamps the whole block, and the fill tools repeat it as a pattern</li>
-                    <li>Right-click erases, whatever tool is selected</li>
-                    <li>Fill covers a connected empty area, or replaces a connected run of the same tile</li>
-                    <li>Fill Erase removes a connected run of the same tile</li>
-                    <li>Row Fill and Column Fill paint a whole line in one click</li>
-                    <li>Box fills a dragged rectangle with the picked tiles; right-drag clears one</li>
-                    <li>Select drags out a region: Ctrl+C or Ctrl+X takes it, Delete clears it, and Ctrl+V turns the copy into the brush so a click puts it down</li>
-                    <li>Solid marks cells a game should treat as walls; right-click clears one. They are saved with the map and shown as a red film you can hide in View</li>
-                </ul>
-
-                <h3><svg class="icon"><use href="#i-layers"/></svg>Layers</h3>
-                <ul>
-                    <li>Layer 1 is the background; higher layers draw on top</li>
-                    <li>Press 1 to 9 or use the Layer menu to switch, and add up to 10 layers</li>
-                    <li>Other layers are faded so you can see what you are drawing over. Turn that off in View</li>
-                    <li>The eye in the Layer menu hides a layer; H hides or shows the current one. Layers can be renamed and moved up or down the stack</li>
-                </ul>
-
-                <h3><svg class="icon"><use href="#i-tileset"/></svg>Tileset</h3>
-                <ul>
-                    <li>File, then Change Tileset: paste an image URL or choose an image</li>
-                    <li>Use the + and - buttons above the palette to zoom the tiles</li>
-                    <li>Set the tile size (Edit, then Tile Size) to match the image before drawing; sheets with a thin line between tiles want a gap of 1</li>
-                    <li>Shift+H and Shift+V mirror the brush, a block included, and the mirrored tiles are saved that way</li>
-                    <li class="help-caution">Swapping to a tileset with a different layout changes what placed tiles look like</li>
-                </ul>
-
-                <h3><svg class="icon"><use href="#i-mouse"/></svg>Moving Around</h3>
-                <ul>
-                    <li>Mouse wheel zooms toward the pointer, from 25% to 400%</li>
-                    <li>Hold Space and drag, or drag with the middle mouse button, to pan</li>
-                    <li>Press 0 to go back to 100%</li>
-                </ul>
-
-                <h3><svg class="icon"><use href="#i-save"/></svg>Saving</h3>
-                <ul>
-                    <li>Ctrl+S saves your project</li>
-                    <li>Export PNG makes an image of the layers you choose, with transparency</li>
-                    <li>Export Tiled Map writes a .tmj file that Tiled, Phaser, Godot and most engines can read</li>
-                    <li>On a touch screen, one finger draws and two fingers pan and zoom</li>
-                </ul>
+    <div class="modal help-modal" id="helpModal">
+        <div class="modal-header"><svg class="icon"><use href="#i-bulb"/></svg>Help<span class="help-close" onclick="closeModal()" title="Close (Esc)"><svg class="icon"><use href="#i-x-circle"/></svg></span></div>
+        <div class="help-shell">
+            <div class="help-nav">
+                <div class="help-search"><svg class="icon"><use href="#i-zoom-in"/></svg><input type="text" id="helpSearch" placeholder="Search help" autocomplete="off"></div>
+                <div id="helpTopics"></div>
             </div>
-        </div>
-        <div class="modal-buttons">
-            <button class="modal-btn-apply" onclick="closeModal()">Got it</button>
-        </div>
-    </div>
-
-    <div class="modal" id="shortcutsModal">
-        <div class="modal-header"><svg class="icon"><use href="#i-keyboard"/></svg>Keyboard Shortcuts</div>
-        <div class="modal-content" style="max-height: 420px; overflow-y: auto;">
-            <table class="shortcut-table" style="font-size: 13px;">
-                <tr><td>Ctrl+S</td><td>Save project</td></tr>
-                <tr><td>Ctrl+Z</td><td>Undo</td></tr>
-                <tr><td>Ctrl+Y or Ctrl+Shift+Z</td><td>Redo</td></tr>
-                <tr><td>P</td><td>Pencil</td></tr>
-                <tr><td>E</td><td>Eraser</td></tr>
-                <tr><td>F</td><td>Fill</td></tr>
-                <tr><td>X</td><td>Fill Erase</td></tr>
-                <tr><td>R</td><td>Row Fill</td></tr>
-                <tr><td>C</td><td>Column Fill</td></tr>
-                <tr><td>B</td><td>Box fill</td></tr>
-                <tr><td>M</td><td>Select</td></tr>
-                <tr><td>S</td><td>Solid</td></tr>
-                <tr><td>Ctrl+C / Ctrl+X</td><td>Copy or cut the selection on the current layer</td></tr>
-                <tr><td>Ctrl+V</td><td>Make the copy the brush</td></tr>
-                <tr><td>Delete</td><td>Clear the selection on the current layer</td></tr>
-                <tr><td>Ctrl+A</td><td>Select the whole map</td></tr>
-                <tr><td>Shift+H / Shift+V</td><td>Flip the brush left-right / upside down</td></tr>
-                <tr><td>1 to 9</td><td>Switch layer</td></tr>
-                <tr><td>G</td><td>Show or hide the grid</td></tr>
-                <tr><td>H</td><td>Hide or show the current layer</td></tr>
-                <tr><td>+ and -</td><td>Zoom in and out</td></tr>
-                <tr><td>0</td><td>Reset zoom to 100%</td></tr>
-                <tr><td>Space + drag</td><td>Pan the map</td></tr>
-                <tr><td>Middle button drag</td><td>Pan the map</td></tr>
-                <tr><td>Mouse wheel</td><td>Zoom toward the pointer</td></tr>
-                <tr><td>Right click</td><td>Erase</td></tr>
-                <tr><td>Esc</td><td>Close menus and dialogs</td></tr>
-            </table>
-        </div>
-        <div class="modal-buttons">
-            <button class="modal-btn-apply" onclick="closeModal()">Got it</button>
+            <div class="help-body" id="helpBody"></div>
         </div>
     </div>
 
@@ -1256,7 +1434,7 @@
             <div id="SelectionDiv">
                 <canvas id="SelectionCanvas">Your browser does not support the HTML5 canvas element.</canvas>
             </div>
-            <div class="palette-hint">Click a tile to pick it up, or drag across several to pick a block, then draw on the map.</div>
+            <div class="palette-hint">Click a tile to pick it up, or drag across several to pick a block, then draw on the map. Press <b>F1</b> for help.</div>
         </div>
     </div>
 
@@ -1401,6 +1579,11 @@ document.addEventListener('keydown', function(e) {
     }
     var tag = e.target.tagName;
     var typing = tag === 'INPUT' || tag === 'TEXTAREA';
+    if (e.key === 'F1') {
+        e.preventDefault();
+        openHelp(helpTopicForTool());
+        return;
+    }
     if (e.key === 'Escape') {
         closeModal();
         closeMenus();
@@ -1437,6 +1620,10 @@ document.addEventListener('keydown', function(e) {
     if (e.ctrlKey || e.metaKey || e.altKey || !window.editor) return;
     if (e.shiftKey && (e.key === 'H' || e.key === 'V')) {
         flipBrush(e.key === 'H' ? 1 : 2);
+        return;
+    }
+    if (e.key === '?') {
+        openHelp(helpTopicForTool());
         return;
     }
 
@@ -2045,6 +2232,264 @@ document.getElementById('tilesetFileInput').addEventListener('change', function(
     var reader = new FileReader();
     reader.onload = function() { applyTilesetUrl(reader.result); };
     reader.readAsDataURL(file);
+});
+
+// ---- Help ------------------------------------------------------------------
+// One topic per part of the editor. Written as HTML strings so the whole
+// manual lives in this file next to the features it describes; hosted-only
+// pieces are wrapped in host('library'|'gamebuilder', html) and drop out
+// when the host did not announce them.
+
+function ic(id) { return '<svg class="icon"><use href="#' + id + '"/></svg>'; }
+function kb(k) { return '<kbd>' + k + '</kbd>'; }
+function mp() { return '<span class="menu-path">' + Array.prototype.slice.call(arguments).join(' ' + ic('i-chevron') + ' ') + '</span>'; }
+function host(feature, html) { return hostFeatures.indexOf(feature) >= 0 ? html : ''; }
+function toolCard(icon, name, key, text) {
+    return '<div class="tool-card">' + ic(icon) + '<b>' + name + (key ? kb(key) : '') + '</b><span>' + text + '</span></div>';
+}
+
+function helpTopics() {
+    return [
+    { id: 'start', icon: 'i-bulb', title: 'Getting started', html:
+        '<h2>' + ic('i-bulb') + 'Getting started</h2>' +
+        '<p class="lead">A tile map is a grid of cells, each showing one small picture from a tileset. You pick a tile on the right and paint it on the map in the middle. Games read the finished grid to build a level.</p>' +
+        '<h3>The screen</h3>' +
+        '<ul><li><b>Menu bar</b> along the top: File, Edit, View, Layer and Help.</li>' +
+        '<li><b>Tool rail</b> on the left: the layer badge, then the nine tools. Hover a tool for its key.</li>' +
+        '<li><b>Map</b> in the middle. Scroll to zoom, hold ' + kb('Space') + ' and drag to move around.</li>' +
+        '<li><b>Tileset palette</b> on the right: the tiles you can paint with, with zoom buttons above it.</li>' +
+        '<li><b>Status bar</b> along the bottom: map size, tile size, current layer, the cell under the pointer, what is picked, and the zoom.</li></ul>' +
+        '<h3>Your first map</h3>' +
+        '<ol><li>Click a tile in the palette. A ghost of it follows the pointer over the map.</li>' +
+        '<li>Left-click or drag on the map to paint. Right-click to erase.</li>' +
+        '<li>Press ' + kb('F') + ' for Fill and click an empty area to flood it.</li>' +
+        '<li>Press ' + kb('2') + ' to switch to layer 2 and put trees, coins or clouds on top of the ground.</li>' +
+        '<li>Press ' + kb('Ctrl+S') + ' to save.</li></ol>' +
+        host('gamebuilder', '<div class="note">Starting from a blank map? When you create a new Tilemap project the platform offers three starter maps (Grassy Hills, Desert Run, Snow Peak). Open one, look at how its layers and solid cells are set up, and change anything you like.</div>') +
+        '<p>Next: <a onclick="openHelp(\'tools\')">the tools</a>, <a onclick="openHelp(\'tileset\')">tilesets</a>, or <a onclick="openHelp(\'shortcuts\')">every shortcut</a>.</p>' },
+
+    { id: 'tools', icon: 'i-pencil', title: 'The tools', html:
+        '<h2>' + ic('i-pencil') + 'The tools</h2>' +
+        '<p class="lead">Nine tools on the left rail. Each has a key. With any of them, a right-click erases the cell under the pointer, and the undo history keeps one step per drag.</p>' +
+        toolCard('i-pencil', 'Pencil', 'P', 'Paints the picked tile where you click or drag. If you picked a block of tiles in the palette, the whole block is stamped at once. Painting over a different tile replaces it.') +
+        toolCard('i-eraser', 'Eraser', 'E', 'Clears cells on the current layer as you drag. Only that layer is touched.') +
+        toolCard('i-bucket', 'Fill', 'F', 'Click an empty area to flood it, or click a run of the same tile to swap every connected one for what you picked. A picked block is repeated as a pattern, so a two-wide ground pattern fills a field in one click.') +
+        toolCard('i-bucket-x', 'Fill Erase', 'X', 'Click a tile to remove it and every connected tile of the same kind.') +
+        toolCard('i-row', 'Row Fill', 'R', 'Paints the whole row you click, edge to edge, with the picked tile or pattern.') +
+        toolCard('i-column', 'Column Fill', 'C', 'The same, top to bottom.') +
+        toolCard('i-box', 'Box', 'B', 'Drag out a rectangle to fill it. The pattern starts at the corner you began from. Drag with the right button to clear a rectangle instead.') +
+        toolCard('i-select', 'Select', 'M', 'Drag out a region. Then ' + kb('Ctrl+C') + ' copies it, ' + kb('Ctrl+X') + ' cuts it, ' + kb('Delete') + ' clears it and ' + kb('Ctrl+V') + ' turns the copy into your brush. See <a onclick="openHelp(\'clipboard\')">copy and paste</a>.') +
+        toolCard('i-solid', 'Solid', 'S', 'Marks cells a game should treat as walls or floor. They show as a red film. Right-click clears one. See <a onclick="openHelp(\'solid\')">solid cells</a>.') +
+        '<div class="note">The ghost under the pointer always shows what the tool is about to do: the tile or block for the pencil, a whole row or column for the line tools, a red frame for the erasers.</div>' },
+
+    { id: 'tileset', icon: 'i-tileset', title: 'Tilesets and the palette', html:
+        '<h2>' + ic('i-tileset') + 'Tilesets and the palette</h2>' +
+        '<p class="lead">A tileset is one image cut into equal squares. The palette on the right shows it with a grid over it. The checkerboard behind it is transparency.</p>' +
+        '<h3>Picking tiles</h3>' +
+        '<ul><li>Click a tile to pick it. The status bar shows its number.</li>' +
+        '<li><b>Drag across several tiles</b> to pick a block, up to 16 by 16. The pencil stamps the block; the fill tools repeat it as a pattern. Trees, doors and houses that span several tiles go down in one click this way.</li>' +
+        '<li>The ' + ic('i-zoom-out') + ' and ' + ic('i-zoom-in') + ' buttons above the palette make the tiles bigger or smaller on screen. This does not change the map.</li>' +
+        '<li>' + kb('Shift+H') + ' and ' + kb('Shift+V') + ' mirror the brush. A mirrored block is mirrored as a whole, so a house facing right becomes a house facing left. Mirrored tiles are saved that way.</li></ul>' +
+        '<h3>Changing the tileset</h3>' +
+        '<p>' + mp('File', 'Change Tileset...') + ' (or the ' + ic('i-tileset') + ' button above the palette). Paste the address of a PNG, or click <b>Choose an image...</b> to use a picture' + host('library', ', or <b>Browse the library</b> to pick one of the tilesets and tilemap packs already on the platform') + '.</p>' +
+        host('library', '<div class="note">A tileset from your own files must be shared for the map to show it to anyone else who opens it. The editor asks before it shares one. Library tilesets are already public.</div>') +
+        '<h3>Tile size, gap and border</h3>' +
+        '<p>' + mp('Edit', 'Tile Size...') + ' sets how big one tile is. 16, 32, 48 and 64 are the usual sizes. Set this to match the image <b>before</b> you draw.</p>' +
+        '<ul><li><b>Gap between tiles</b>: some sheets leave a thin line between tiles. If the palette grid looks one pixel off after a few tiles, set the gap to 1.</li>' +
+        '<li><b>Border around the sheet</b>: for sheets that do not start at the top-left corner.</li></ul>' +
+        '<div class="note warn">Tiles already on the map keep their tile numbers. Swap to a sheet laid out differently and the map will look different. Undo (' + kb('Ctrl+Z') + ') brings the old sheet back.</div>' },
+
+    { id: 'layers', icon: 'i-layers', title: 'Layers', html:
+        '<h2>' + ic('i-layers') + 'Layers</h2>' +
+        '<p class="lead">A map can have up to ten layers drawn on top of each other. Layer 1 is the ground; higher layers draw in front of it. Each layer holds its own tiles, so a tree on layer 2 can stand on grass from layer 1.</p>' +
+        '<h3>Working on a layer</h3>' +
+        '<ul><li>The big number on the left is the current layer. Press ' + kb('1') + ' to ' + kb('9') + ' to switch, or pick from the Layer menu.</li>' +
+        '<li>Other layers are faded so you can see what you are drawing over. Turn that off with ' + mp('View', 'Fade Other Layers') + ', or show only the current layer with ' + mp('View', 'Current Layer Only') + '.</li></ul>' +
+        '<h3>The Layer menu</h3>' +
+        '<ul><li><b>Add Layer</b>, <b>Remove Current Layer</b> (asks first if it has tiles), <b>Clear Current Layer</b>.</li>' +
+        '<li><b>Rename Current Layer...</b> gives it a name like Sky or Trees. Names show in the menu, the status bar and the exports.</li>' +
+        '<li>The ' + ic('i-eye') + ' on each row hides or shows that layer. ' + kb('H') + ' does it for the current one. A hidden layer stays out of screenshots, previews and exports, and refuses the brush until you show it again.</li>' +
+        '<li>The ' + ic('i-up') + ' and ' + ic('i-down') + ' arrows move a layer up or down the stack.</li></ul>' +
+        '<div class="note">Every change here except hiding is an undo step. Hiding is a view choice, like the grid.</div>' +
+        host('gamebuilder', '<p>When you send the map to GameBuilder, layer 1 becomes the ground the player walks on and the other visible layers become decoration in front of it.</p>') },
+
+    { id: 'clipboard', icon: 'i-copy', title: 'Copy, paste and mirror', html:
+        '<h2>' + ic('i-copy') + 'Copy, paste and mirror</h2>' +
+        '<p class="lead">Build a house once, copy it, and stamp it anywhere. The copy works on the current layer.</p>' +
+        '<ol><li>Press ' + kb('M') + ' for Select and drag out a region. A dashed frame shows it. ' + kb('Ctrl+A') + ' selects the whole map.</li>' +
+        '<li>' + kb('Ctrl+C') + ' copies the region, ' + kb('Ctrl+X') + ' cuts it, ' + kb('Delete') + ' clears it.</li>' +
+        '<li>' + kb('Ctrl+V') + ' makes the copy your brush: the pencil comes back and the ghost under the pointer shows the copied cells. Click to put them down. Empty cells in the copy leave the map alone.</li>' +
+        '<li>Pick any palette tile to go back to normal painting. ' + kb('Esc') + ' drops the selection.</li></ol>' +
+        '<h3>Mirroring</h3>' +
+        '<p>' + kb('Shift+H') + ' flips the brush left-right, ' + kb('Shift+V') + ' upside down (also under Edit, with a check mark while on). This works for a single tile, a block from the palette, and a pasted copy. The status bar says <b>mirrored</b> while a flip is on.</p>' +
+        '<div class="note">The Edit menu greys out Cut, Copy and Delete until something is selected, and Paste until something has been copied.</div>' },
+
+    { id: 'solid', icon: 'i-solid', title: 'Solid cells', html:
+        '<h2>' + ic('i-solid') + 'Solid cells</h2>' +
+        '<p class="lead">A tile is only a picture. Solid cells tell a game which cells are walls, floors and platforms the player cannot pass through. They are saved with the map and shown as a red film.</p>' +
+        '<ul><li>Press ' + kb('S') + ' for the Solid tool. Drag to mark cells, right-click to clear one. Picking the tool turns the red film on if it was hidden.</li>' +
+        '<li>' + mp('View', 'Solid Cells') + ' hides or shows the film. ' + mp('Edit', 'Clear Solid Cells') + ' removes them all in one undo step.</li>' +
+        '<li>Solid cells are on their own, not on a layer, so they stay put when you switch layers.</li></ul>' +
+        '<h3>In exports</h3>' +
+        '<ul><li><b>Tiled</b>: an object layer named Solid with one rectangle per run of cells.</li>' +
+        host('gamebuilder', '<li><b>GameBuilder</b>: GameBuilder decides solidity per tile type, not per cell, so the export takes a vote. A ground tile becomes solid when at least half of its placed cells are marked. With no cells marked, every ground tile is solid.</li>') +
+        '<li><b>PNG</b>: never included, so exported pictures stay clean.</li></ul>' },
+
+    { id: 'map', icon: 'i-resize', title: 'Map size and tile size', html:
+        '<h2>' + ic('i-resize') + 'Map size and tile size</h2>' +
+        '<p>' + mp('Edit', 'Map Size...') + ' sets the width and height in tiles, from 5 to 200 each. Tiles keep their positions; anything outside the new size is removed, and undo brings it back. Big maps (over 100) may feel slow.</p>' +
+        '<p>' + mp('Edit', 'Tile Size...') + ' sets the size of one tile in pixels, plus the gap and border of the sheet. Placed tiles stay on their grid cells and are re-cut from the sheet. See <a onclick="openHelp(\'tileset\')">tilesets</a>.</p>' +
+        '<p>The status bar shows both, plus the cell under the pointer as column and row, counted from the top-left corner starting at 0.</p>' +
+        host('gamebuilder', '<div class="note">GameBuilder levels are at most 500 wide and 100 tall. A bigger map is clipped when sent.</div>') },
+
+    { id: 'view', icon: 'i-eye', title: 'Zoom, pan and touch', html:
+        '<h2>' + ic('i-eye') + 'Zoom, pan and touch</h2>' +
+        '<h3>Zoom</h3>' +
+        '<ul><li>Mouse wheel over the map zooms toward the pointer, from 25% to 400%.</li>' +
+        '<li>' + kb('+') + ' and ' + kb('-') + ' zoom in steps, ' + kb('0') + ' goes back to 100%. The View menu has the same.</li>' +
+        '<li>The grid hides itself below 60% so a zoomed-out map does not turn gray. ' + kb('G') + ' toggles the grid; ' + mp('View', 'Tiles') + ' hides the tiles themselves to see only solid cells.</li></ul>' +
+        '<h3>Pan</h3>' +
+        '<ul><li>Hold ' + kb('Space') + ' and drag, or drag with the middle mouse button.</li>' +
+        '<li>Scrollbars work too.</li></ul>' +
+        '<h3>Touch screens</h3>' +
+        '<ul><li>One finger paints, exactly like the left mouse button, with whatever tool is picked.</li>' +
+        '<li>Two fingers pan; spread or pinch them to zoom.</li>' +
+        '<li>There is no right-click on a touch screen, so use the Eraser (' + kb('E') + ') to clear.</li>' +
+        '<li>In the palette, tap a tile or drag across several.</li></ul>' },
+
+    { id: 'saving', icon: 'i-save', title: 'Saving and exporting', html:
+        '<h2>' + ic('i-save') + 'Saving and exporting</h2>' +
+        '<h3>Saving</h3>' +
+        '<p>' + kb('Ctrl+S') + ' or ' + mp('File', 'Save') + '. ' + (hostFeatures.length ? 'The map is saved to your project on the platform, tileset address included. You will be asked before leaving with unsaved changes.' : 'The map downloads as <b>tilemap-project.json</b>, tileset address included.') + ' ' + mp('File', 'Open Project File...') + ' loads a saved JSON file.</p>' +
+        '<p>Undo (' + kb('Ctrl+Z') + ') and redo (' + kb('Ctrl+Y') + ') cover the last 50 steps: painting, fills, layer changes, size changes and tileset swaps.</p>' +
+        '<h3>Export PNG</h3>' +
+        '<p>' + mp('File', 'Export PNG...') + ' makes a picture of the map at 100% with no grid. Tick the layers to include; each row shows a small preview and its tile count. Empty cells stay transparent' + host('gamebuilder', ', and the image lands in your files') + '.</p>' +
+        '<h3>Export Tiled Map</h3>' +
+        '<p>' + mp('File', 'Export Tiled Map (.tmj)') + ' writes the map in the format Tiled, Phaser, Godot and most engines read: one tile layer per layer, mirrored tiles kept, solid cells as an object layer named Solid, and the tileset referenced by its address. Open the .tmj in Tiled with the tileset image next to it.</p>' +
+        host('gamebuilder', '<h3>Send to GameBuilder</h3>' +
+        '<p>' + mp('File', 'Send to GameBuilder...') + ' makes a new GameBuilder project with your map as its first level and opens it in this tab, so save first.</p>' +
+        '<ul><li>Layer 1 becomes the ground; other visible layers become decoration in front.</li>' +
+        '<li>Solid cells decide which ground tiles are walls (see <a onclick="openHelp(\'solid\')">solid cells</a>).</li>' +
+        '<li>Every tile you used is added to the GameBuilder tile palette. Mirrored tiles arrive the normal way round, since GameBuilder has no flips.</li></ul>') },
+
+    { id: 'shortcuts', icon: 'i-keyboard', title: 'Keyboard shortcuts', html:
+        '<h2>' + ic('i-keyboard') + 'Keyboard shortcuts</h2>' +
+        '<table class="shortcut-table">' +
+        [['P', 'Pencil'], ['E', 'Eraser'], ['F', 'Fill'], ['X', 'Fill Erase'], ['R', 'Row Fill'], ['C', 'Column Fill'], ['B', 'Box'], ['M', 'Select'], ['S', 'Solid'],
+         ['1 to 9', 'Switch to that layer'], ['H', 'Hide or show the current layer'], ['G', 'Show or hide the grid'],
+         ['Ctrl+Z', 'Undo'], ['Ctrl+Y or Ctrl+Shift+Z', 'Redo'], ['Ctrl+S', 'Save'],
+         ['Ctrl+C / Ctrl+X', 'Copy or cut the selection'], ['Ctrl+V', 'Make the copy the brush'], ['Delete', 'Clear the selection'], ['Ctrl+A', 'Select the whole map'],
+         ['Shift+H / Shift+V', 'Mirror the brush left-right / upside down'],
+         ['+ / -', 'Zoom in / out'], ['0', 'Zoom to 100%'], ['Mouse wheel', 'Zoom toward the pointer'], ['Space + drag', 'Pan'], ['Middle button drag', 'Pan'],
+         ['Right click', 'Erase'], ['Enter', 'Apply the open dialog'], ['Esc', 'Close menus and dialogs, drop the selection'], ['F1 or ?', 'Open help for the current tool']]
+        .map(function(r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') +
+        '</table>' },
+
+    { id: 'trouble', icon: 'i-warning', title: 'Something is wrong', html:
+        '<h2>' + ic('i-warning') + 'Something is wrong</h2>' +
+        '<h3>Nothing happens when I click on the map</h3>' +
+        '<ul><li>Is a tile picked? The status bar says <b>Picked none</b> until you click one in the palette.</li>' +
+        '<li>Is the current layer hidden? A hidden layer refuses the brush and says so. Press ' + kb('H') + ' or use the eye in the Layer menu.</li>' +
+        '<li>Is ' + kb('Space') + ' held down, or a dialog open?</li></ul>' +
+        '<h3>The palette grid does not line up with the tiles</h3>' +
+        '<p>The tile size is wrong, or the sheet has a gap between tiles. ' + mp('Edit', 'Tile Size...') + ': set the size to match the image, and a gap of 1 for sheets with a thin line between tiles.</p>' +
+        '<h3>The map changed when I switched tilesets</h3>' +
+        '<p>Tiles are stored as numbers, and the new sheet has different pictures at those numbers. ' + kb('Ctrl+Z') + ' brings the old sheet back.</p>' +
+        '<h3>The tileset would not load</h3>' +
+        '<p>The address must point straight at a PNG or similar image. Pages that show an image are not the image. ' + host('library', 'A tileset from your own files must be shared; the editor offers to share it when you pick it. ') + 'When a sheet cannot be loaded the editor falls back to its small sample tileset, so the map still draws.</p>' +
+        '<h3>Fast drags left gaps</h3>' +
+        '<p>They should not: the editor fills every cell between two points of a drag. If you see gaps, the map may be very large and the browser busy; zoom in a little.</p>' +
+        host('gamebuilder', '<h3>GameBuilder cut off part of my map</h3><p>GameBuilder levels are at most 500 wide and 100 tall. Shrink the map with ' + mp('Edit', 'Map Size...') + ' or accept the clipping.</p>') +
+        '<h3>I lost work</h3>' +
+        '<p>Save often with ' + kb('Ctrl+S') + '. ' + (hostFeatures.length ? 'The platform warns before you leave with unsaved changes.' : 'The browser warns before you leave with unsaved changes.') + '</p>' },
+
+    { id: 'new', icon: 'i-check-circle', title: "What's new", html:
+        '<h2>' + ic('i-check-circle') + "What's new</h2>" +
+        '<p class="lead">Added in September 2026.</p>' +
+        '<ul><li>Pick a block of tiles by dragging in the palette; the pencil stamps it, the fills repeat it.</li>' +
+        '<li>Box and Select tools, copy, cut, paste as a brush, and mirroring with ' + kb('Shift+H') + ' / ' + kb('Shift+V') + '.</li>' +
+        '<li>Solid cells with their own tool, saved with the map.</li>' +
+        '<li>Layers can be hidden, named and reordered. The Layer menu shows tile counts.</li>' +
+        '<li>Tilesets with a gap between tiles or a border around the sheet.</li>' +
+        '<li>Export to Tiled (.tmj)' + host('gamebuilder', ' and Send to GameBuilder') + '.' + host('library', ' Browse the library for a tileset.') + '</li>' +
+        '<li>Touch: one finger paints, two fingers pan and zoom.</li>' +
+        '<li>A status bar, a ghost of the brush under the pointer, ' + kb('Space') + ' to pan, and this help.</li></ul>' }
+    ];
+}
+
+var helpCurrent = 'start';
+
+function helpTopicForTool() {
+    if (!window.editor) return 'start';
+    if (editor.toolType === 'select') return 'clipboard';
+    if (editor.toolType === 'collision') return 'solid';
+    return 'tools';
+}
+
+function openHelp(topicId) {
+    closeMenus();
+    closeModal();
+    document.getElementById('helpModal').classList.add('show');
+    document.getElementById('modalOverlay').classList.add('show');
+    document.getElementById('helpSearch').value = '';
+    renderHelpTopics('');
+    showHelpTopic(topicId || helpCurrent);
+}
+
+function renderHelpTopics(query) {
+    var nav = document.getElementById('helpTopics');
+    nav.innerHTML = '';
+    var q = (query || '').trim().toLowerCase();
+    helpTopics().forEach(function(t) {
+        var plain = t.html.replace(/<[^>]+>/g, ' ').toLowerCase();
+        var hit = !q || t.title.toLowerCase().indexOf(q) >= 0 || plain.indexOf(q) >= 0;
+        var row = document.createElement('div');
+        row.className = 'help-topic' + (t.id === helpCurrent ? ' current' : '') + (hit ? '' : ' dim');
+        row.innerHTML = ic(t.icon) + '<span></span>';
+        row.querySelector('span').textContent = t.title;
+        row.onclick = function() { showHelpTopic(t.id); };
+        nav.appendChild(row);
+    });
+}
+
+function showHelpTopic(id) {
+    var topic = helpTopics().filter(function(t) { return t.id === id; })[0];
+    if (!topic) return;
+    helpCurrent = id;
+    var body = document.getElementById('helpBody');
+    body.innerHTML = topic.html;
+    body.scrollTop = 0;
+    var q = document.getElementById('helpSearch').value.trim();
+    if (q.length >= 2) highlightHelp(body, q);
+    document.querySelectorAll('.help-topic').forEach(function(row) {
+        row.classList.toggle('current', row.textContent.trim() === topic.title);
+    });
+}
+
+// Wraps matches in text nodes only, so the markup stays intact.
+function highlightHelp(root, query) {
+    var re = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    var nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function(node) {
+        if (!re.test(node.nodeValue)) return;
+        var span = document.createElement('span');
+        span.innerHTML = node.nodeValue.replace(/[&<>]/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }).replace(re, '<mark>$&</mark>');
+        node.parentNode.replaceChild(span, node);
+    });
+}
+
+document.getElementById('helpSearch').addEventListener('input', function() {
+    renderHelpTopics(this.value);
+    var q = this.value.trim().toLowerCase();
+    // Jump to the first topic that matches, so typing "mirror" lands on the answer.
+    if (q.length >= 2) {
+        var first = helpTopics().filter(function(t) { return t.title.toLowerCase().indexOf(q) >= 0 || t.html.replace(/<[^>]+>/g, ' ').toLowerCase().indexOf(q) >= 0; })[0];
+        if (first) showHelpTopic(first.id);
+    } else {
+        showHelpTopic(helpCurrent);
+    }
 });
 
 // ---- Tiled -----------------------------------------------------------------
