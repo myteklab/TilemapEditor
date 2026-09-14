@@ -1999,11 +1999,13 @@ function setupHoverOverlay() {
         updateStatus();
     });
     // A box or a selection ends on release; the outline should not wait
-    // for the next mouse move to catch up.
-    window.addEventListener('mouseup', function() {
+    // for the next mouse move to catch up. The menus are only refreshed
+    // for a release on the map: rebuilding the layer rows on a release
+    // inside the Layer menu removed the row before its click could fire.
+    window.addEventListener('mouseup', function(e) {
         drawHover(lastHoverCell);
         updateStatus();
-        updateEditMenu();
+        if (editor.div.contains(e.target)) updateEditMenu();
     });
 }
 
