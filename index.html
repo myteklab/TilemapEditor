@@ -2277,7 +2277,7 @@ function helpTopics() {
         toolCard('i-bucket-x', 'Fill Erase', 'X', 'Click a tile to remove it and every connected tile of the same kind.') +
         toolCard('i-row', 'Row Fill', 'R', 'Paints the whole row you click, edge to edge, with the picked tile or pattern.') +
         toolCard('i-column', 'Column Fill', 'C', 'The same, top to bottom.') +
-        toolCard('i-box', 'Box', 'B', 'Drag out a rectangle to fill it. The pattern starts at the corner you began from. Drag with the right button to clear a rectangle instead.') +
+        toolCard('i-box', 'Box', 'B', 'Drag out a rectangle and let go to fill it with the picked tile. A picked block, or a pasted copy, repeats as a pattern from the rectangle\'s top-left corner whichever way you dragged, and the ghost shows the result while you drag. Drag with the right button to clear a rectangle instead. Works on the current layer; the whole box is one undo step.') +
         toolCard('i-select', 'Select', 'M', 'Drag out a region. Then ' + kb('Ctrl+C') + ' copies it, ' + kb('Ctrl+X') + ' cuts it, ' + kb('Delete') + ' clears it and ' + kb('Ctrl+V') + ' turns the copy into your brush. See <a onclick="openHelp(\'clipboard\')">copy and paste</a>.') +
         toolCard('i-solid', 'Solid', 'S', 'Marks cells a game should treat as walls or floor. They show as a red film. Right-click clears one. See <a onclick="openHelp(\'solid\')">solid cells</a>.') +
         '<div class="note">The ghost under the pointer always shows what the tool is about to do: the tile or block for the pencil, a whole row or column for the line tools, a red frame for the erasers.</div>' },
@@ -2320,6 +2320,7 @@ function helpTopics() {
         '<li>' + kb('Ctrl+C') + ' copies the region, ' + kb('Ctrl+X') + ' cuts it, ' + kb('Delete') + ' clears it.</li>' +
         '<li>' + kb('Ctrl+V') + ' makes the copy your brush: the pencil comes back and the ghost under the pointer shows the copied cells. Click to put them down. Empty cells in the copy leave the map alone.</li>' +
         '<li>Pick any palette tile to go back to normal painting. ' + kb('Esc') + ' drops the selection.</li></ol>' +
+        '<p>The pasted copy is a brush like any other: Box (' + kb('B') + ') and the fill tools repeat it as a pattern, so one copied fence section can fill a whole row.</p>' +
         '<h3>Mirroring</h3>' +
         '<p>' + kb('Shift+H') + ' flips the brush left-right, ' + kb('Shift+V') + ' upside down (also under Edit, with a check mark while on). This works for a single tile, a block from the palette, and a pasted copy. The status bar says <b>mirrored</b> while a flip is on.</p>' +
         '<div class="note">The Edit menu greys out Cut, Copy and Delete until something is selected, and Paste until something has been copied.</div>' },
