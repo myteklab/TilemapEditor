@@ -1035,6 +1035,12 @@
     .status-bar .grow {
         flex: 1;
         border: none;
+        color: #718096;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        display: block;
+        line-height: 26px;
     }
 
     ::-webkit-scrollbar {
@@ -1391,11 +1397,11 @@
                         <span class="tool-name">Column Fill</span>
                     </div>
                 </label>
-                <label class="tool-option" title="Box (B): drag to fill a rectangle, right-drag to clear one">
+                <label class="tool-option" title="Box Fill (B): drag a rectangle and let go to fill it, right-drag to clear one">
                     <input type="radio" name="toolType" value="rect">
                     <div class="tool-button">
                         <svg class="tool-icon"><use href="#i-box"/></svg>
-                        <span class="tool-name">Box</span>
+                        <span class="tool-name">Box Fill</span>
                     </div>
                 </label>
                 <label class="tool-option" title="Select (M): drag a region to copy, cut or delete">
@@ -1444,7 +1450,7 @@
         <span><svg class="icon"><use href="#i-layers"/></svg>Layer <b id="statusLayer">1</b></span>
         <span><svg class="icon"><use href="#i-crosshair"/></svg>Cell <b id="statusCell">-</b></span>
         <span><svg class="icon"><use href="#i-tileset"/></svg>Picked <b id="statusPicked">none</b></span>
-        <span class="grow"></span>
+        <span class="grow" id="statusHint"></span>
         <span><svg class="icon"><use href="#i-zoom-in"/></svg>Zoom <b id="statusZoom">100%</b></span>
     </div>
 
@@ -1553,6 +1559,7 @@ function announceToHost() {
 }
 
 function refreshAll() {
+    applyTool(editor.toolType);
     setChecked('gridCheck', editor.drawGrid);
     setChecked('tilesCheck', editor.drawTiles);
     setChecked('layerOnlyCheck', editor.drawLayer);
@@ -1678,11 +1685,27 @@ function selectTool(toolName) {
     drawHover(lastHoverCell);
 }
 
+// One line per tool in the status bar, so the way a tool works is on screen
+// while it is in hand rather than only in the help.
+var TOOL_HINTS = {
+    pencil: 'Pencil: click or drag to paint the picked tile. Right-click erases.',
+    eraser: 'Eraser: drag to clear cells on this layer.',
+    fill: 'Fill: click an empty area to flood it, or a run of the same tile to replace it.',
+    fillErase: 'Fill Erase: click a tile to remove it and every connected tile like it.',
+    rowFill: 'Row Fill: click to paint the whole row.',
+    columnFill: 'Column Fill: click to paint the whole column.',
+    rect: 'Box Fill: drag a rectangle and let go to fill it. Right-drag clears a rectangle.',
+    select: 'Select: drag a region, then Ctrl+C copies, Ctrl+X cuts, Delete clears, Ctrl+V pastes as the brush.',
+    collision: 'Solid: drag to mark cells as walls, right-click to clear. Shown as a red film.'
+};
+
 // Picking the Solid tool also turns the solid overlay back on, otherwise the
 // cells being painted would be invisible.
 function applyTool(toolName) {
     editor.toolType = toolName;
     editor.mode = toolName === 'collision' ? 1 : 0;
+    var hint = document.getElementById('statusHint');
+    if (hint) hint.textContent = TOOL_HINTS[toolName] || '';
     if (toolName === 'collision' && !editor.drawBlocks) {
         editor.drawBlocks = true;
         setChecked('blocksCheck', true);
@@ -2025,7 +2048,13 @@ function drawHover(cell) {
             hoverCtx.fillStyle = 'rgba(230,57,70,0.3)';
             hoverCtx.fillRect(box.x0 * cs, box.y0 * cs, (box.x1 - box.x0 + 1) * cs, (box.y1 - box.y0 + 1) * cs);
         }
-        drawMarquee(box, erasing ? 'rgba(245,101,101,0.95)' : 'rgba(255,255,255,0.95)');
+        var bt2 = Math.max(1, Math.round(1 / editor.zoom));
+        hoverCtx.lineWidth = bt2;
+        hoverCtx.setLineDash([]);
+        hoverCtx.strokeStyle = 'rgba(0,0,0,0.85)';
+        hoverCtx.strokeRect(box.x0 * cs + bt2 / 2, box.y0 * cs + bt2 / 2, (box.x1 - box.x0 + 1) * cs - bt2, (box.y1 - box.y0 + 1) * cs - bt2);
+        hoverCtx.strokeStyle = erasing ? 'rgba(245,101,101,0.95)' : 'rgba(255,255,255,0.95)';
+        hoverCtx.strokeRect(box.x0 * cs + bt2 * 1.5, box.y0 * cs + bt2 * 1.5, (box.x1 - box.x0 + 1) * cs - bt2 * 3, (box.y1 - box.y0 + 1) * cs - bt2 * 3);
         return;
     }
     if (tool === 'collision') {
@@ -2277,7 +2306,7 @@ function helpTopics() {
         toolCard('i-bucket-x', 'Fill Erase', 'X', 'Click a tile to remove it and every connected tile of the same kind.') +
         toolCard('i-row', 'Row Fill', 'R', 'Paints the whole row you click, edge to edge, with the picked tile or pattern.') +
         toolCard('i-column', 'Column Fill', 'C', 'The same, top to bottom.') +
-        toolCard('i-box', 'Box', 'B', 'Drag out a rectangle and let go to fill it with the picked tile. A picked block, or a pasted copy, repeats as a pattern from the rectangle\'s top-left corner whichever way you dragged, and the ghost shows the result while you drag. Drag with the right button to clear a rectangle instead. Works on the current layer; the whole box is one undo step.') +
+        toolCard('i-box', 'Box Fill', 'B', 'Drag out a rectangle and let go to fill it with the picked tile. A picked block, or a pasted copy, repeats as a pattern from the rectangle\'s top-left corner whichever way you dragged, and the ghost shows the result while you drag. Drag with the right button to clear a rectangle instead. Works on the current layer; the whole box is one undo step.') +
         toolCard('i-select', 'Select', 'M', 'Drag out a region. Then ' + kb('Ctrl+C') + ' copies it, ' + kb('Ctrl+X') + ' cuts it, ' + kb('Delete') + ' clears it and ' + kb('Ctrl+V') + ' turns the copy into your brush. See <a onclick="openHelp(\'clipboard\')">copy and paste</a>.') +
         toolCard('i-solid', 'Solid', 'S', 'Marks cells a game should treat as walls or floor. They show as a red film. Right-click clears one. See <a onclick="openHelp(\'solid\')">solid cells</a>.') +
         '<div class="note">The ghost under the pointer always shows what the tool is about to do: the tile or block for the pencil, a whole row or column for the line tools, a red frame for the erasers.</div>' },
@@ -2320,7 +2349,7 @@ function helpTopics() {
         '<li>' + kb('Ctrl+C') + ' copies the region, ' + kb('Ctrl+X') + ' cuts it, ' + kb('Delete') + ' clears it.</li>' +
         '<li>' + kb('Ctrl+V') + ' makes the copy your brush: the pencil comes back and the ghost under the pointer shows the copied cells. Click to put them down. Empty cells in the copy leave the map alone.</li>' +
         '<li>Pick any palette tile to go back to normal painting. ' + kb('Esc') + ' drops the selection.</li></ol>' +
-        '<p>The pasted copy is a brush like any other: Box (' + kb('B') + ') and the fill tools repeat it as a pattern, so one copied fence section can fill a whole row.</p>' +
+        '<p>The pasted copy is a brush like any other: Box Fill (' + kb('B') + ') and the fill tools repeat it as a pattern, so one copied fence section can fill a whole row.</p>' +
         '<h3>Mirroring</h3>' +
         '<p>' + kb('Shift+H') + ' flips the brush left-right, ' + kb('Shift+V') + ' upside down (also under Edit, with a check mark while on). This works for a single tile, a block from the palette, and a pasted copy. The status bar says <b>mirrored</b> while a flip is on.</p>' +
         '<div class="note">The Edit menu greys out Cut, Copy and Delete until something is selected, and Paste until something has been copied.</div>' },
@@ -2376,7 +2405,7 @@ function helpTopics() {
     { id: 'shortcuts', icon: 'i-keyboard', title: 'Keyboard shortcuts', html:
         '<h2>' + ic('i-keyboard') + 'Keyboard shortcuts</h2>' +
         '<table class="shortcut-table">' +
-        [['P', 'Pencil'], ['E', 'Eraser'], ['F', 'Fill'], ['X', 'Fill Erase'], ['R', 'Row Fill'], ['C', 'Column Fill'], ['B', 'Box'], ['M', 'Select'], ['S', 'Solid'],
+        [['P', 'Pencil'], ['E', 'Eraser'], ['F', 'Fill'], ['X', 'Fill Erase'], ['R', 'Row Fill'], ['C', 'Column Fill'], ['B', 'Box Fill'], ['M', 'Select'], ['S', 'Solid'],
          ['1 to 9', 'Switch to that layer'], ['H', 'Hide or show the current layer'], ['G', 'Show or hide the grid'],
          ['Ctrl+Z', 'Undo'], ['Ctrl+Y or Ctrl+Shift+Z', 'Redo'], ['Ctrl+S', 'Save'],
          ['Ctrl+C / Ctrl+X', 'Copy or cut the selection'], ['Ctrl+V', 'Make the copy the brush'], ['Delete', 'Clear the selection'], ['Ctrl+A', 'Select the whole map'],
@@ -2408,7 +2437,7 @@ function helpTopics() {
         '<h2>' + ic('i-check-circle') + "What's new</h2>" +
         '<p class="lead">Added in September 2026.</p>' +
         '<ul><li>Pick a block of tiles by dragging in the palette; the pencil stamps it, the fills repeat it.</li>' +
-        '<li>Box and Select tools, copy, cut, paste as a brush, and mirroring with ' + kb('Shift+H') + ' / ' + kb('Shift+V') + '.</li>' +
+        '<li>Box Fill and Select tools, copy, cut, paste as a brush, and mirroring with ' + kb('Shift+H') + ' / ' + kb('Shift+V') + '.</li>' +
         '<li>Solid cells with their own tool, saved with the map.</li>' +
         '<li>Layers can be hidden, named and reordered. The Layer menu shows tile counts.</li>' +
         '<li>Tilesets with a gap between tiles or a border around the sheet.</li>' +

@@ -49,7 +49,7 @@ tile size, gap and border. Collisions are `[gridX, gridY]` cells.
 |-----|--------|
 | P, E, F, X, R, C | Pencil, Eraser, Fill, Fill Erase, Row Fill, Column Fill |
 | 1 to 9 | Switch layer |
-| B, M, S | Box fill, Select, Solid |
+| B, M, S | Box Fill, Select, Solid |
 | Ctrl+C / X / V | Copy or cut the selection, paste it as the brush |
 | Delete, Ctrl+A | Clear the selection, select all |
 | Shift+H / Shift+V | Flip the brush left-right / upside down |

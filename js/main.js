@@ -127,6 +127,14 @@ function Editor(areaW, areaH){
 			self.mouseLeft = true;
 			self.strokeOpen = false;
 			var hasTile = self.hasBrush();
+			// Pressing with nothing picked used to do nothing at all, which
+			// read as the tool being broken.
+			var needsTile = { pencil: 1, fill: 1, rowFill: 1, columnFill: 1, rect: 1 };
+			if (self.mode === 0 && needsTile[self.toolType] && !hasTile) {
+				if (window.showToast) showToast('Pick a tile in the palette on the right first.', 'info', 2000);
+				self.mouseLeft = false;
+				return;
+			}
 			switch (self.toolType) {
 				case 'fill': if (hasTile) self.floodFill(self.mouseX, self.mouseY); break;
 				case 'fillErase': self.floodFillErase(self.mouseX, self.mouseY); break;
