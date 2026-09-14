@@ -2005,7 +2005,7 @@ function setupHoverOverlay() {
     window.addEventListener('mouseup', function(e) {
         drawHover(lastHoverCell);
         updateStatus();
-        if (editor.div.contains(e.target)) updateEditMenu();
+        if (e.target instanceof Node && editor.div.contains(e.target)) updateEditMenu();
     });
 }
 
